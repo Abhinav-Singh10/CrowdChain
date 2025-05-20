@@ -7,6 +7,8 @@ import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
 
+import ConnectButtonNav from "./ConnectButtonNav"
+
 export function Navbar() {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
@@ -36,9 +38,8 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled ? "bg-slate-950/80 backdrop-blur-md" : "bg-transparent"
-      }`}
+      className={`fixed top-0 z-50 w-full transition-all duration-300 ${isScrolled ? "bg-slate-950/80 backdrop-blur-md" : "bg-transparent"
+        }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
@@ -55,9 +56,8 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${
-                  isActive(link.href) ? "text-white" : "text-slate-400 hover:text-white"
-                }`}
+                className={`text-sm font-medium transition-colors ${isActive(link.href) ? "text-white" : "text-slate-400 hover:text-white"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -65,12 +65,13 @@ export function Navbar() {
           </nav>
 
           <div className="hidden md:block">
-            <Button
+            {/* <Button
               asChild
               className="group relative overflow-hidden bg-gradient-to-r from-teal-500 to-cyan-600 hover:shadow-lg hover:shadow-teal-500/20"
             >
               <Link href="/connect">Connect Wallet</Link>
-            </Button>
+            </Button> */}
+            <ConnectButtonNav />
           </div>
 
           {/* Mobile Menu Button */}
@@ -94,21 +95,21 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`p-2 text-sm font-medium transition-colors ${
-                  isActive(link.href) ? "text-white" : "text-slate-400 hover:text-white"
-                }`}
+                className={`p-2 text-sm font-medium transition-colors ${isActive(link.href) ? "text-white" : "text-slate-400 hover:text-white"
+                  }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <Button
+            {/* <Button
               asChild
               className="mt-2 w-full group relative overflow-hidden bg-gradient-to-r from-teal-500 to-cyan-600 hover:shadow-lg hover:shadow-teal-500/20"
               onClick={() => setIsMenuOpen(false)}
             >
               <Link href="/connect">Connect Wallet</Link>
-            </Button>
+            </Button> */}
+            <CustomConnectTrigger />
           </nav>
         </div>
       )}

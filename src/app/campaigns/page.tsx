@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { NetworkEffect } from "@/components/network-effect"
+import { getContract } from "thirdweb"
+import { client } from "../client"
+import {sepolia} from "thirdweb/chains"
+import { CROWDFUDNING_FACTORY } from "@/constants/contracts"
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -25,6 +29,13 @@ export default function CampaignsPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [page, setPage] = useState(1)
   const campaignsPerPage = 6
+
+  // Calling real data from the deployed contracts
+  const contract= getContract({
+    client: client,
+    chain: sepolia,
+    address: CROWDFUDNING_FACTORY
+  })
 
   // Simulate loading data
   useEffect(() => {

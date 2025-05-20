@@ -92,14 +92,14 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <h3 className="mb-2 line-clamp-1 text-xl font-bold">{campaign.title}</h3>
+          <h3 className="mb-2 line-clamp-1 text-xl font-bold text-white">{campaign.title}</h3> 
           <p className="mb-4 line-clamp-2 text-sm text-slate-400">{campaign.description}</p>
 
           <div className="mb-4 flex items-center justify-between">
             <CircularProgress value={progressPercentage} size={60} strokeWidth={5} />
             <div className="text-right">
               <p className="text-sm text-slate-400">Raised</p>
-              <p className="text-lg font-bold">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
+              <p className="text-lg font- text-white">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
               <p className="text-xs text-slate-400">of {gweiToEth(campaign.goalAmount).toFixed(2)} ETH</p>
             </div>
           </div>
@@ -107,11 +107,11 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
           <div className="grid grid-cols-2 gap-2 text-center">
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-xs text-slate-400">Donors</p>
-              <p className="font-bold">{campaign.totalDonors}</p>
+              <p className="font-bold text-white">{campaign.totalDonors}</p>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-xs text-slate-400">Granted</p>
-              <p className="font-bold">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
+              <p className="font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
             </div>
           </div>
 
