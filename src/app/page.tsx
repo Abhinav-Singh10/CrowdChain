@@ -11,6 +11,7 @@ import { HeroStats } from "@/components/hero-stats"
 import { HeroImage } from "@/components/hero-image"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import CustomConnectTrigger  from "@/components/CustomConnectTrigger"
 
 export default function Home() {
   return (
@@ -48,16 +49,7 @@ function HeroSection() {
               </p>
             </FadeIn>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row md:justify-start">
-              <Button
-                asChild
-                size="lg"
-                className="group relative overflow-hidden bg-gradient-to-r from-teal-500 to-cyan-600 px-8 text-lg hover:shadow-lg hover:shadow-teal-500/20"
-              >
-                <Link href="/connect">
-                  Connect Wallet
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </Button>
+              <CustomConnectTrigger />
               <Button
                 variant="outline"
                 size="lg"
@@ -162,9 +154,8 @@ function HowItWorksSection() {
             <FadeIn key={index} delay={index * 0.1}>
               <div className="relative mb-12 md:mb-24">
                 <div
-                  className={`flex flex-col ${
-                    index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                  } items-center gap-8`}
+                  className={`flex flex-col ${index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                    } items-center gap-8`}
                 >
                   <div className="flex md:w-1/2">
                     <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-slate-900 text-2xl font-bold">
