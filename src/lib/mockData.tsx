@@ -35,7 +35,7 @@ export const mockCampaigns: Campaign[] = [
     title: "Save Dogs Shelter",
     description:
       "Help us build a new shelter for abandoned dogs in our community. Your contribution will provide food, medical care, and shelter for dozens of dogs in need. We aim to create a sustainable facility that can house up to 50 dogs at a time, with proper veterinary facilities and adoption programs.",
-    imageUrl: "/placeholder.svg?height=400&width=600",
+    imageUrl: "https://img.freepik.com/free-photo/many-cute-rescue-dogs-shelter-waiting-be-adopted_23-2148682949.jpg",
     goalAmount: 2000000000, // 2 ETH in Gwei
     totalAmountRaised: 1500000000000000000, // 1.5 ETH in Wei
     fundingGranted: 500000000000000000, // 0.5 ETH in Wei
@@ -59,7 +59,7 @@ export const mockCampaigns: Campaign[] = [
     title: "Plant 10,000 Trees",
     description:
       "Join our initiative to plant 10,000 trees across urban areas to combat climate change and improve air quality. Each tree planted will absorb approximately 48 pounds of CO2 per year and provide habitat for local wildlife. We'll work with local communities to ensure proper care and maintenance.",
-    imageUrl: "/placeholder.svg?height=400&width=600",
+    imageUrl: " https://mvnu.edu/content/uploads/2023/04/ArborDay23.jpg",
     goalAmount: 1000000000, // 1 ETH in Gwei
     totalAmountRaised: 500000000000000000, // 0.5 ETH in Wei
     fundingGranted: 0, // 0 ETH in Wei
@@ -83,7 +83,7 @@ export const mockCampaigns: Campaign[] = [
     title: "Community Bridge Reconstruction",
     description:
       "Our community bridge was damaged in the recent floods. We need to rebuild it to reconnect our neighborhood and ensure safe passage for residents. The new bridge will be built with sustainable materials and designed to withstand future flooding events. Your support will help restore vital infrastructure for our community.",
-    imageUrl: "/placeholder.svg?height=400&width=600",
+    imageUrl: "https://www.uhpcsolutions.com/hubfs/DJI_0130-1.jpg",
     goalAmount: 1000000000, // 1 ETH in Gwei
     totalAmountRaised: 800000000000000000, // 0.8 ETH in Wei
     fundingGranted: 0, // 0 ETH in Wei
@@ -118,7 +118,7 @@ export const mockCampaigns: Campaign[] = [
     title: "Tech Education for Underserved Communities",
     description:
       "Help us provide coding education and computer equipment to underserved communities. We aim to bridge the digital divide by offering free programming courses, mentorship, and laptops to students who otherwise wouldn't have access to tech education. Your contribution will directly impact the future of these students.",
-    imageUrl: "/placeholder.svg?height=400&width=600",
+    imageUrl: "https://theinscribermag.com/wp-content/uploads/2024/04/stempowered-banner-upscale-1.jpg",
     goalAmount: 3000000000, // 3 ETH in Gwei
     totalAmountRaised: 2000000000000000000, // 2 ETH in Wei
     fundingGranted: 1000000000000000000, // 1 ETH in Wei
@@ -154,7 +154,7 @@ export const mockCampaigns: Campaign[] = [
     title: "Sustainable Urban Farm",
     description:
       "Support our initiative to create a sustainable urban farm that will provide fresh produce to local food banks and create green jobs. The farm will use vertical farming techniques to maximize space efficiency and minimize water usage. We'll also offer educational programs about sustainable agriculture and nutrition.",
-    imageUrl: "/placeholder.svg?height=400&width=600",
+    imageUrl: "https://res.cloudinary.com/di6vi1xlx/image/upload/v1723575598/website-2024/blog/posts/urban-solidarity-farms-supporting-food-banks-through-urban-agriculture/MicroHabitat_18_York_120_Bremner-8994_gxwgje.jpg",
     goalAmount: 2500000000, // 2.5 ETH in Gwei
     totalAmountRaised: 100000000000000000, // 0.1 ETH in Wei
     fundingGranted: 0, // 0 ETH in Wei
