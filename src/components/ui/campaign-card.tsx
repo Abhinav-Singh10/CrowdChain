@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowRight, Clock } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, fromUnixTime } from "date-fns"
 import { type Campaign, weiToEth, gweiToEth, CampaignDetails } from "@/lib/mockData"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -131,7 +131,7 @@ export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
 
   // Format dates
   const timeLeft =
-    status === "Active" ? formatDistanceToNow(new Date(endDate), { addSuffix: true }) : ""
+    status === "Active" ? formatDistanceToNow(fromUnixTime(endDate), { addSuffix: true }) : ""
 
   // Status badge color
   const getStatusColor = (status: string) => {
