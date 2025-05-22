@@ -6,27 +6,132 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowRight, Clock } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { type Campaign, weiToEth, gweiToEth } from "@/lib/mockData"
+import { type Campaign, weiToEth, gweiToEth, CampaignDetails } from "@/lib/mockData"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CircularProgress } from "@/components/ui/circular-progress"
+import { getContract } from "thirdweb"
+import { client } from "@/app/client"
+import { sepolia } from "thirdweb/chains"
+import { useReadContract } from "thirdweb/react"
+
+// Map status and voteStatus numbers to strings
+const statusMap: Record<number, CampaignDetails['status']> = {
+  0: 'Active',
+  1: 'Ended',
+  2: 'Cancelled',
+};
+
+const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
+  0: 'Active',
+  1: 'Approved',
+  2: 'Rejected',
+  3: 'NoVotes',
+  4: 'Eligible',
+};
 
 interface CampaignCardProps {
-  campaign: Campaign
+  address: string
   index?: number
 }
 
-export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
+export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [CampaignDetails, setCampaignDetails] = useState<Campaign>();
+
+  // Calling real data from the deployed contracts
+  const contract = getContract({
+    client: client,
+    chain: sepolia,
+    address:address,
+  })
+
+  // ALL CONTRACT DETAILS IMPORTED HERE 
+  // 1. goal amount
+  const { data: RawgoalAmount, isPending:isLoadingRawgoalAmount } = useReadContract({
+    contract,
+    method: "function goalAmount() view returns (uint256)",
+    params: [],
+  });
+  const goalAmount= RawgoalAmount? Number(RawgoalAmount): 0;
+  // 2. totalAmountRaised
+  const { data: RawtotalAmountRaised, isPending: isLoadingRawtotalAmountRaised} = useReadContract({
+    contract,
+    method:
+      "function totalAmountRaised() view returns (uint256)",
+    params: [],
+  });
+  const totalAmountRaised = Number(RawtotalAmountRaised);
+  // 3. Campaign Status
+  const { data: IndexdCampaignStatus, isPending :isLoadingIndexdCampaignStatus } = useReadContract({
+    contract,
+    method: "function status() view returns (uint8)",
+    params: [],
+  });
+  const status = IndexdCampaignStatus ? statusMap[IndexdCampaignStatus] : "Active"
+  // 4. endDate
+  const { data: EndDateAsEpoch, isPending :isLoadingEndDateAsEpoch } = useReadContract({
+    contract,
+    method: "function endDate() view returns (uint256)",
+    params: [],
+  });
+  const endDate = EndDateAsEpoch ? Number(EndDateAsEpoch) : 77 // NEED TO FIX THIS
+  // 5. VoteStatus
+  const { data: CurrentVoteStatus, isPending :isLoadingCurrentVoteStatus} = useReadContract({
+    contract,
+    method:
+      "function getCurrentVoteStatus() view returns (uint8)",
+    params: [],
+  });
+  const voteStatus = CurrentVoteStatus ? voteStatusMap[CurrentVoteStatus] : "NoVotes"
+  // 6. ImageUrl
+  const { data: RawImageURL, isPending :isLoadingRawImageURL} = useReadContract({
+    contract,
+    method: "function imageUrl() view returns (string)",
+    params: [],
+  });
+  const imageUrl = RawImageURL ? RawImageURL : "";
+  // 7. Title
+  const { data:RawTitle, isPending :isLoadingRawTitle} = useReadContract({
+    contract,
+    method: "function title() view returns (string)",
+    params: [],
+  });
+  const title = RawTitle ? RawTitle : "";
+  // 7. Description
+  const { data:RawDesc, isPending :isLoadingRawDesc} = useReadContract({
+    contract,
+    method: "function description() view returns (string)",
+    params: [],
+  });
+  const desc = RawDesc ? RawDesc : "";
+  // 8. Total Donors
+    const { data:RawDonorNumber, isPending :isLoadingRawDonorNumber} = useReadContract({
+    contract,
+    method:
+      "function getTotalDonors() view returns (uint256)",
+    params: [],
+  });
+  const totalDonors= RawDonorNumber? RawDonorNumber:0;
+  // 9. Funding Granted
+  const { data:RawFundingGranted, isPending :isLoadingRawFundingGranted} = useReadContract({
+    contract,
+    method:
+      "function FundingGranted() view returns (uint256)",
+    params: [],
+  });
+  const fundingGranted= RawFundingGranted? Number(RawFundingGranted):0;
+
+
 
   // Calculate progress percentage
-  const goalInWei = campaign.goalAmount * 1e9 // Convert Gwei to Wei
-  const progressPercentage = Math.min(Math.round((campaign.totalAmountRaised / goalInWei) * 100), 100)
+  const goalInWei = goalAmount ? Number(goalAmount) * 1e9 : 0 // Convert Gwei to Wei
+  const progressPercentage = Math.min(Math.round((totalAmountRaised / goalInWei) * 100), 100)
 
   // Format dates
   const timeLeft =
-    campaign.status === "Active" ? formatDistanceToNow(new Date(campaign.endDate), { addSuffix: true }) : ""
+    status === "Active" ? formatDistanceToNow(new Date(endDate), { addSuffix: true }) : ""
 
   // Status badge color
   const getStatusColor = (status: string) => {
@@ -43,8 +148,8 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
   }
 
   // Vote status badge color
-  const getVoteStatusColor = (status: string) => {
-    switch (status) {
+  const getVoteStatusColor = (voteStatus: string) => {
+    switch (voteStatus) {
       case "Active":
         return "bg-cyan-500 hover:bg-cyan-600"
       case "Approved":
@@ -71,8 +176,8 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
         <CardHeader className="p-0">
           <div className="relative h-48 w-full overflow-hidden">
             <Image
-              src={campaign.imageUrl || "/placeholder.svg"}
-              alt={campaign.title}
+              src={imageUrl || "/placeholder.svg"}
+              alt={title}
               fill
               className="object-cover transition-transform duration-500 ease-in-out"
               style={{ transform: isHovered ? "scale(1.05)" : "scale(1)" }}
@@ -80,8 +185,8 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60"></div>
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="flex items-center justify-between">
-                <Badge className={`${getStatusColor(campaign.status)}`}>{campaign.status}</Badge>
-                {campaign.status === "Active" && (
+                <Badge className={`${getStatusColor(status)}`}>{status}</Badge>
+                {status === "Active" && (
                   <div className="flex items-center text-xs text-slate-300">
                     <Clock className="mr-1 h-3 w-3" />
                     {timeLeft}
@@ -92,32 +197,32 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <h3 className="mb-2 line-clamp-1 text-xl font-bold text-white">{campaign.title}</h3> 
-          <p className="mb-4 line-clamp-2 text-sm text-slate-400">{campaign.description}</p>
+          <h3 className="mb-2 line-clamp-1 text-xl font-bold text-white">{title}</h3>
+          <p className="mb-4 line-clamp-2 text-sm text-slate-400">{desc}</p>
 
           <div className="mb-4 flex items-center justify-between">
             <CircularProgress value={progressPercentage} size={60} strokeWidth={5} />
             <div className="text-right">
               <p className="text-sm text-slate-400">Raised</p>
-              <p className="text-lg font- text-white">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
-              <p className="text-xs text-slate-400">of {gweiToEth(campaign.goalAmount).toFixed(2)} ETH</p>
+              <p className="text-lg font- text-white">{weiToEth(totalAmountRaised).toFixed(2)} ETH</p>
+              <p className="text-xs text-slate-400">of {gweiToEth(goalAmount).toFixed(2)} ETH</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-center">
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-xs text-slate-400">Donors</p>
-              <p className="font-bold text-white">{campaign.totalDonors}</p>
+              <p className="font-bold text-white">{totalDonors}</p>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-xs text-slate-400">Granted</p>
-              <p className="font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
+              <p className="font-bold text-white">{weiToEth(fundingGranted).toFixed(2)} ETH</p>
             </div>
           </div>
 
           <div className="mt-4">
             <p className="text-xs text-slate-400">Vote Status</p>
-            <Badge className={`mt-1 ${getVoteStatusColor(campaign.voteStatus)}`}>{campaign.voteStatus}</Badge>
+            <Badge className={`mt-1 ${getVoteStatusColor(voteStatus)}`}>{voteStatus}</Badge>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
@@ -125,7 +230,7 @@ export function CampaignCard({ campaign, index = 0 }: CampaignCardProps) {
             asChild
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/20"
           >
-            <Link href={`/campaigns/${campaign.address}`} className="flex items-center justify-center">
+            <Link href={`/campaigns/${address}`} className="flex items-center justify-center">
               View Details
               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>

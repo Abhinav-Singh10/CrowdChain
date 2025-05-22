@@ -37,6 +37,12 @@ images: {
         port: '',
         pathname: '/hubfs/DJI_0130-1.jpg',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.postimg.cc',
+        port: '',
+        pathname: '/jShdDhcX/**',
+      },
     ],
   },
 };

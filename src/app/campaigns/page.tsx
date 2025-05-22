@@ -20,6 +20,11 @@ import { CROWDFUDNING_FACTORY } from "@/constants/contracts"
 
 import { useReadContract } from "thirdweb/react";
 
+
+export type CampaignAddress = {
+  address: string
+}
+
 // Map status and voteStatus numbers to strings
 const statusMap: Record<number, CampaignDetails['status']> = {
   0: 'Active',
@@ -40,6 +45,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignDetails[]>([])
   const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignDetails[]>([])
   const [displayedCampaigns, setDisplayedCampaigns] = useState<CampaignDetails[]>([])
+  const [campaignAddressList,setCampaignAddressList]= useState<CampaignAddress[]>([]); 
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -56,7 +62,7 @@ export default function CampaignsPage() {
   })
 
   // Importing campaign Addresses currently on the blockchain from the Factory
-  const { data: CamapignAddresses, isPending } = useReadContract({
+  const { data: CamapignAddresses, isPending: isLoadingCampaignAddresses } = useReadContract({
     contract,
     method:
       "function getCampaigns() view returns (address[])",
@@ -71,6 +77,7 @@ export default function CampaignsPage() {
     params: [],
   });
 
+
   //See if this is needed
   const { data: TotalCampaignCount, isPending: isLoadingTotalCampaigns } = useReadContract({
     contract,
@@ -79,10 +86,8 @@ export default function CampaignsPage() {
     params: [],
   });
 
-  console.log(TotalCampaignCount, AllCampaigns);
 
-
-  // Simulate loading data
+  // Loading All Campaigns Data to State
   useEffect(() => {
     if (isLoadingAllCampaigns) {
       setIsLoading(true);
@@ -108,7 +113,24 @@ export default function CampaignsPage() {
 
   }, [AllCampaigns, isLoadingAllCampaigns])
 
-  console.log(campaigns);
+  
+
+  // Loading all campaign state addresses to the state
+    useEffect(() => {
+    if (isLoadingCampaignAddresses) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+      if (CamapignAddresses) {
+        const formattedAddresses: CampaignAddress[]= CamapignAddresses.map(a=>({
+          address: a.toString()
+        }))
+        setCampaignAddressList(formattedAddresses);
+      }
+    }
+    setIsLoading(false)
+  }, [CamapignAddresses, isLoadingCampaignAddresses] 
+)
 
 
   // Apply filters and search
@@ -135,24 +157,9 @@ export default function CampaignsPage() {
           campaign.title.toLowerCase().includes(query)
       )
     }
-
-    // Apply sorting
-    switch (sortBy) {
-      case "raised":
-        filtered.sort((a, b) => b.totalAmountRaised - a.totalAmountRaised)
-        break
-      case "donors":
-        filtered.sort((a, b) => b.totalDonors - a.totalDonors)
-        break
-      case "newest":
-      default:
-        filtered.sort((a, b) => b.startDate - a.startDate)
-        break
-    }
-
     setFilteredCampaigns(filtered)
     setPage(1) // Reset to first page when filters change
-  }, [campaigns, statusFilter, voteStatusFilter, searchQuery, sortBy])
+  }, [campaigns, statusFilter, voteStatusFilter, searchQuery])
 
   // Paginate results
   useEffect(() => {
@@ -235,7 +242,7 @@ export default function CampaignsPage() {
               </Select>
             </motion.div>
 
-            {/* Sort options */}
+            {/* Sort options
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -284,10 +291,10 @@ export default function CampaignsPage() {
                   Most Donors
                 </Button>
               </div>
-            </motion.div>
+            </motion.div> */}
 
             {/* Campaign grid */}
-            {isLoading ? (
+            {isLoadingAllCampaigns && isLoadingCampaignAddresses  ? (
               <div className="flex h-64 items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
               </div>
@@ -295,7 +302,7 @@ export default function CampaignsPage() {
               <>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {displayedCampaigns.map((campaign, index) => (
-                    <CampaignCard key={campaign.address} campaign={campaign} index={index} />
+                    <CampaignCard key={campaign.address} address={campaign.address} index={index} />
                   ))}
                 </div>
 
