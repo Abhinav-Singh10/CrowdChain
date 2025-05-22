@@ -5,23 +5,41 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Search, Filter, Loader2 } from "lucide-react"
-import { mockCampaigns, type Campaign } from "@/lib/mockData" // Clean Mock data
+import { mockCampaigns, type CampaignDetails } from "@/lib/mockData" // Clean Mock data
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { CampaignCard } from "@/components/ui/campaign-card" 
+import { CampaignCard } from "@/components/ui/campaign-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { NetworkEffect } from "@/components/network-effect"
 import { getContract } from "thirdweb"
 import { client } from "../client"
-import {sepolia} from "thirdweb/chains"
+import { sepolia } from "thirdweb/chains"
 import { CROWDFUDNING_FACTORY } from "@/constants/contracts"
 
+import { useReadContract } from "thirdweb/react";
+
+// Map status and voteStatus numbers to strings
+const statusMap: Record<number, CampaignDetails['status']> = {
+  0: 'Active',
+  1: 'Ended',
+  2: 'Cancelled',
+};
+
+const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
+  0: 'Active',
+  1: 'Approved',
+  2: 'Rejected',
+  3: 'NoVotes',
+  4: 'Eligible',
+};
+
+
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([])
-  const [displayedCampaigns, setDisplayedCampaigns] = useState<Campaign[]>([])
+  const [campaigns, setCampaigns] = useState<CampaignDetails[]>([])
+  const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignDetails[]>([])
+  const [displayedCampaigns, setDisplayedCampaigns] = useState<CampaignDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -31,21 +49,67 @@ export default function CampaignsPage() {
   const campaignsPerPage = 6
 
   // Calling real data from the deployed contracts
-  const contract= getContract({
+  const contract = getContract({
     client: client,
     chain: sepolia,
     address: CROWDFUDNING_FACTORY
   })
 
+  // Importing campaign Addresses currently on the blockchain from the Factory
+  const { data: CamapignAddresses, isPending } = useReadContract({
+    contract,
+    method:
+      "function getCampaigns() view returns (address[])",
+    params: [],
+  });
+
+  // List of all Camapigns for filtering and sorting
+  const { data: AllCampaigns, isPending: isLoadingAllCampaigns } = useReadContract({
+    contract,
+    method:
+      "function getAllCampaigns() view returns ((address campaignAddress, address owner, string title, uint256 goalAmount, uint256 totalAmountRaised, uint8 status, uint8 voteStatus, bool voteEligible)[])",
+    params: [],
+  });
+
+  //See if this is needed
+  const { data: TotalCampaignCount, isPending: isLoadingTotalCampaigns } = useReadContract({
+    contract,
+    method:
+      "function totalCampaigns() view returns (uint256)",
+    params: [],
+  });
+
+  console.log(TotalCampaignCount, AllCampaigns);
+
+
   // Simulate loading data
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCampaigns(mockCampaigns)
-      setIsLoading(false)
-    }, 1500)
+    if (isLoadingAllCampaigns) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+      if (AllCampaigns) {
+        // setCampaigns(AllCampaigns);
+        const formattedCampaigns: CampaignDetails[] = AllCampaigns.map(c => ({
+          address: c.campaignAddress,
+          owner: c.owner,
+          title: c.title,
+          goalAmount: Number(c.goalAmount) / 1e9, // Convert Gwei (BigInt) to ETH (number)
+          status: statusMap[c.status] || 'Active', //Defaulting to Active
+          voteEligible: c.voteEligible,
+          voteStatus: voteStatusMap[c.voteStatus] || 'NoVotes', //Defualting to NoVotes
 
-    return () => clearTimeout(timer)
-  }, [])
+        }))
+        setCampaigns(formattedCampaigns);
+      }
+    }
+    setIsLoading(false)
+
+
+  }, [AllCampaigns, isLoadingAllCampaigns])
+
+  console.log(campaigns);
+
 
   // Apply filters and search
   useEffect(() => {
@@ -68,7 +132,7 @@ export default function CampaignsPage() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (campaign) =>
-          campaign.title.toLowerCase().includes(query) || campaign.description.toLowerCase().includes(query),
+          campaign.title.toLowerCase().includes(query)
       )
     }
 

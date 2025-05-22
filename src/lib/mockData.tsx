@@ -1,5 +1,5 @@
 export type Campaign = {
-  address: string
+  address: string 
   owner: string
   title: string
   description: string
@@ -22,6 +22,15 @@ export type Campaign = {
     noWeight: number
     status: string
   }[]
+}
+export type CampaignDetails = {
+  address: string 
+  goalAmount: number // Gwei
+  owner: string
+  title: string
+  status: "Active" | "Ended" | "Cancelled"
+  voteEligible: boolean
+  voteStatus: "Active" | "Approved" | "Rejected" | "NoVotes" | "Eligible"
 }
 
 // Mock user for testing

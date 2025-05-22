@@ -335,42 +335,42 @@ export default function CampaignDetailsPage() {
 
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="rounded-lg bg-slate-800/50 p-4">
-                            <p className="text-sm text-slate-400">Goal</p>
-                            <p className="text-xl font-bold">{gweiToEth(campaign.goalAmount).toFixed(2)} ETH</p>
+                            <p className="text-sm text-slate-400 ">Goal</p>
+                            <p className="text-xl font-bold text-white">{gweiToEth(campaign.goalAmount).toFixed(2)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Raised</p>
-                            <p className="text-xl font-bold">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
+                            <p className="text-xl font-bold text-white">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Donors</p>
-                            <p className="text-xl font-bold">{campaign.totalDonors}</p>
+                            <p className="text-xl font-bold text-white">{campaign.totalDonors}</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Funds Granted</p>
-                            <p className="text-xl font-bold">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
+                            <p className="text-xl font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="mb-6">
-                        <h3 className="mb-2 text-lg font-medium">Campaign Timeline</h3>
+                        <h3 className="mb-2 text-lg font-medium text-white">Campaign Timeline</h3>
                         <div className="flex items-center space-x-2">
-                          <div className="rounded bg-slate-800 px-2 py-1 text-xs">
+                          <div className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
                             {format(new Date(campaign.startDate), "MMM d, yyyy")}
                           </div>
                           <div className="h-0.5 flex-1 bg-gradient-to-r from-teal-500 to-cyan-600" />
-                          <div className="rounded bg-slate-800 px-2 py-1 text-xs">
+                          <div className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
                             {format(new Date(campaign.endDate), "MMM d, yyyy")}
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <h3 className="mb-2 text-lg font-medium">Campaign Owner</h3>
+                        <h3 className="mb-2 text-lg font-medium text-white">Campaign Owner</h3>
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600" />
-                          <span className="ml-2 font-mono text-sm">{formatAddress(campaign.owner)}</span>
+                          <span className="ml-2 font-mono text-sm text-white">{formatAddress(campaign.owner)}</span>
                           {isOwner && <Badge className="ml-2 bg-teal-500">You</Badge>}
                         </div>
                       </div>
@@ -400,8 +400,8 @@ export default function CampaignDetailsPage() {
                             onClick={() => campaign.status === "Active" && setSelectedTier(index)}
                           >
                             <div className="flex items-center justify-between">
-                              <h4 className="font-medium">{tier.name}</h4>
-                              <span className="font-bold">{weiToEth(tier.amount).toFixed(2)} ETH</span>
+                              <h4 className="font-medium text-white">{tier.name}</h4>
+                              <span className="font-bold text-white">{weiToEth(tier.amount).toFixed(2)} ETH</span>
                             </div>
                           </div>
                         ))}
@@ -457,7 +457,7 @@ export default function CampaignDetailsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="mb-4">
-                          <p className="mb-2 text-sm font-medium">{campaign.votes[0].description}</p>
+                          <p className="mb-2 text-sm font-medium text-white">{campaign.votes[0].description}</p>
                           <p className="mb-4 text-sm text-slate-400">
                             Amount: {weiToEth(campaign.votes[0].amount).toFixed(2)} ETH
                           </p>
@@ -580,7 +580,7 @@ export default function CampaignDetailsPage() {
                         <Button
                           onClick={() => handleShare("twitter")}
                           variant="outline"
-                          className="flex items-center justify-center border-slate-700 bg-slate-800/50"
+                          className="flex items-center justify-center border-slate-700 bg-slate-800/50 text-white"
                         >
                           <Twitter className="mr-2 h-4 w-4" />
                           Twitter
@@ -588,7 +588,7 @@ export default function CampaignDetailsPage() {
                         <Button
                           onClick={() => handleShare("copy")}
                           variant="outline"
-                          className="flex items-center justify-center border-slate-700 bg-slate-800/50"
+                          className="flex items-center justify-center border-slate-700 bg-slate-800/50 text-white"
                         >
                           <Copy className="mr-2 h-4 w-4" />
                           Copy Link

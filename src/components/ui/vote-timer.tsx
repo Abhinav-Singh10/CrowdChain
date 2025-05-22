@@ -53,7 +53,7 @@ export function VoteTimer({ endTime }: VoteTimerProps) {
   }
 
   return (
-    <div className={`rounded-lg p-3 text-center ${isExpired ? "bg-red-500/10" : "bg-slate-800/50"}`}>
+    <div className={`rounded-lg p-3 text-center text-white ${isExpired ? "bg-red-500/10" : "bg-slate-800/50"}`}>
       <div className="mb-1 flex items-center justify-center">
         <Clock className="mr-2 h-4 w-4" />
         <span className="text-sm font-medium">{isExpired ? "Vote Ended" : "Vote Ends In"}</span>

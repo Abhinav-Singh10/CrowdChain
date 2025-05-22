@@ -11,7 +11,7 @@ import { HeroStats } from "@/components/hero-stats"
 import { HeroImage } from "@/components/hero-image"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import CustomConnectTrigger  from "@/components/CustomConnectTrigger"
+import CustomConnectTrigger  from "@/components/customConnectTrigger"
 
 export default function Home() {
   return (
