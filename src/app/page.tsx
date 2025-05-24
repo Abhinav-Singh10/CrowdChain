@@ -53,7 +53,7 @@ function HeroSection() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-slate-700 bg-transparent px-8 text-lg hover:bg-slate-900 hover:border-slate-600"
+                className="border-slate-700 bg-transparent px-8 text-lg hover:text-teal-400 hover:border-teal-400 hover:bg-slate-800"
                 asChild
               >
                 <Link href="/explore">Explore Projects</Link>
