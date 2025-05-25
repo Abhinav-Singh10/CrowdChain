@@ -25,10 +25,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { getContract } from "thirdweb"
+import { getContract, prepareContractCall, sendTransaction } from "thirdweb"
 import { client } from "@/app/client"
 import { sepolia } from "thirdweb/chains"
-import { useActiveAccount, useReadContract } from "thirdweb/react"
+import { TransactionButton, useActiveAccount, useReadContract } from "thirdweb/react"
 
 // Map status and voteStatus numbers to strings
 const statusMap: Record<number, CampaignDetails['status']> = {
@@ -66,8 +66,8 @@ export default function CampaignDetailsPage() {
     address: contractAddress,
   })
 
-  console.log("Selected Tier: "+ selectedTier);
-  
+  console.log("Selected Tier: " + selectedTier);
+
 
   // ALL CONTRACT DETAILS IMPORTED HERE 
   // 1. goal amount
@@ -207,7 +207,7 @@ export default function CampaignDetailsPage() {
 
 
   console.log(`Selected tier Amount:  ${campaign?.tiers[selectedTier].amount}`);
-  
+
 
   // Check if user has already voted
   useEffect(() => {
@@ -218,7 +218,7 @@ export default function CampaignDetailsPage() {
     }
   }, [campaign])
 
-  // Calculate progress percentage
+  // Calculate progress percentage (Done)
   const calculateProgress = () => {
     if (!campaign) return 0
     const goalInWei = campaign.goalAmount * 1e9 // Convert Gwei to Wei
@@ -227,38 +227,21 @@ export default function CampaignDetailsPage() {
 
   // Handle donation (Redundant Now)
   const handleDonate = () => {
-    if (selectedTier==null) {
+    if (selectedTier == null) {
       toast.error("Please select a donation tier")
       return
     }
-
     setShowDonateConfirm(true)
   }
 
   // Confirm donation
   const confirmDonate = () => {
-    const tierAmount = campaign.tiers[selectedTier].amount
+    const tierAmount = campaign?.tiers[selectedTier].amount || 0;
 
-    // Update local state (in a real app, this would be a blockchain transaction)
-    const updatedCampaign = { ...campaign }
 
-    // Add donation to user's donations
-    if (!updatedCampaign.donations[mockUser]) {
-      updatedCampaign.donations[mockUser] = 0
-    }
-    updatedCampaign.donations[mockUser] += tierAmount
-
-    // Update total amount raised
-    updatedCampaign.totalAmountRaised += tierAmount
-
-    // Update total donors if this is a new donor
-    if (updatedCampaign.donations[mockUser] === tierAmount) {
-      updatedCampaign.totalDonors += 1
-    }
-
-    setCampaign(updatedCampaign)
+    sendTransaction(transaction);
     setShowDonateConfirm(false)
-    setSelectedTier(null)
+    setSelectedTier(0)
 
     toast.success(`Donated ${weiToEth(tierAmount)} ETH successfully!`)
   }
@@ -343,14 +326,14 @@ export default function CampaignDetailsPage() {
     }
   }
 
-  // Check if user is campaign owner
-  const isOwner = campaign?.owner === mockUser
+  // Check if user is campaign owner (Done)
+  const isOwner = campaign?.owner === account?.address
 
   // Check if user has donated
   const userDonation = campaign?.donations?.[mockUser] || 0
   const hasDonated = userDonation > 0
 
-  // Status badge color
+  // Status badge color (Done)
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
@@ -364,9 +347,9 @@ export default function CampaignDetailsPage() {
     }
   }
 
-  // Vote status badge color
-  const getVoteStatusColor = (status: string) => {
-    switch (status) {
+  // Vote status badge color (Done)
+  const getVoteStatusColor = (voteStatus: string) => {
+    switch (voteStatus) {
       case "Active":
         return "bg-cyan-500 hover:bg-cyan-600"
       case "Approved":
@@ -416,7 +399,7 @@ export default function CampaignDetailsPage() {
       </div>
     )
   }
-  
+
   if (!campaign) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -590,7 +573,7 @@ export default function CampaignDetailsPage() {
                               <p className="text-sm text-slate-300">You selected</p>
                               <p className="text-lg font-bold text-teal-400">
                                 {campaign.tiers[selectedTier].name} -{" "}
-                                {(campaign.tiers[selectedTier].amount/1e9).toFixed(4)} ETH
+                                {(campaign.tiers[selectedTier].amount / 1e9).toFixed(4)} ETH
                               </p>
                             </div>
                           )}
@@ -769,12 +752,12 @@ export default function CampaignDetailsPage() {
                 You are about to donate to this campaign.
               </DialogDescription>
             </DialogHeader>
-  
+
             {selectedTier !== null && (
               <div className="rounded-lg bg-teal-500/10 p-4 text-center">
                 <p className="text-sm text-slate-300">You are donating</p>
                 <p className="text-xl font-bold text-teal-400">
-                  {(campaign?.tiers[selectedTier].amount/1e9).toFixed(4)} ETH
+                  {(campaign?.tiers[selectedTier].amount / 1e9).toFixed(4)} ETH
                 </p>
                 <p className="mt-2 text-sm text-slate-400">Tier: {campaign.tiers[selectedTier].name}</p>
               </div>
@@ -788,9 +771,26 @@ export default function CampaignDetailsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={confirmDonate} className="bg-gradient-to-r from-teal-500 to-cyan-600">
+              <TransactionButton
+                transaction={() => prepareContractCall({
+                  contract,
+                  method: "function donate() payable",
+                  params: [],
+                  value: BigInt(campaign.tiers[selectedTier].amount),
+                })}
+                onTransactionConfirmed={async () => {
+                  setShowDonateConfirm(false)
+                  setSelectedTier(0)
+                  toast.success(`Donated ${(campaign.tiers[selectedTier].amount / 1e9).toFixed(4)} ETH successfully!`)
+                }}
+                onError={async(e)=> toast.error(`Error in transaction: ${e}
+                  Trying to donate: ${BigInt(campaign.tiers[selectedTier].amount)}`)}
+                className="bg-gradient-to-r from-teal-500 to-cyan-600">
                 Confirm Donation
-              </Button>
+              </TransactionButton>
+
+
+
             </DialogFooter>
           </DialogContent>
         </Dialog>
