@@ -17,8 +17,8 @@ import { getContract } from "thirdweb"
 import { client } from "../client"
 import { sepolia } from "thirdweb/chains"
 import { CROWDFUDNING_FACTORY } from "@/constants/contracts"
-
-import { useReadContract } from "thirdweb/react";
+import { ConnectPrompt } from "@/components/connect-prompt"
+import { useActiveAccount, useReadContract } from "thirdweb/react";
 
 
 export type CampaignAddress = {
@@ -42,10 +42,12 @@ const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
 
 
 export default function CampaignsPage() {
+  const account = useActiveAccount();
+
   const [campaigns, setCampaigns] = useState<CampaignDetails[]>([])
   const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignDetails[]>([])
   const [displayedCampaigns, setDisplayedCampaigns] = useState<CampaignDetails[]>([])
-  const [campaignAddressList,setCampaignAddressList]= useState<CampaignAddress[]>([]); 
+  const [campaignAddressList, setCampaignAddressList] = useState<CampaignAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -103,24 +105,24 @@ export default function CampaignsPage() {
 
   }, [AllCampaigns, isLoadingAllCampaigns])
 
-  
+
 
   // Loading all campaign state addresses to the state
-    useEffect(() => {
+  useEffect(() => {
     if (isLoadingCampaignAddresses) {
       setIsLoading(true);
     } else {
       setIsLoading(false);
       if (CamapignAddresses) {
-        const formattedAddresses: CampaignAddress[]= CamapignAddresses.map(a=>({
+        const formattedAddresses: CampaignAddress[] = CamapignAddresses.map(a => ({
           address: a.toString()
         }))
         setCampaignAddressList(formattedAddresses);
       }
     }
     setIsLoading(false)
-  }, [CamapignAddresses, isLoadingCampaignAddresses] 
-)
+  }, [CamapignAddresses, isLoadingCampaignAddresses]
+  )
 
 
   // Apply filters and search
@@ -168,71 +170,89 @@ export default function CampaignsPage() {
     setPage((prev) => prev + 1)
   }
 
+
+
+if (!account) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-white">
       <Navbar />
       <main className="flex-1">
-        <section className="relative py-20 md:py-32">
-          <NetworkEffect className="absolute inset-0 opacity-30" />
-          <div className="container relative z-10 mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-12 text-center"
-            >
-              <h1 className="mb-4 text-4xl font-bold md:text-5xl">Explore Campaigns</h1>
-              <p className="mx-auto max-w-2xl text-lg text-slate-400">
-                Discover innovative projects seeking funding and support the ones that inspire you.
-              </p>
-            </motion.div>
+        <ConnectPrompt
+          title="Explore Projects"
+          description="Connect your wallet to discover and fund innovative projects from creators around the world."
+        />
+      </main>
+      <Footer />
+    </div>
+  )
+}
 
-            {/* Filters and Search */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-8 grid gap-4 md:grid-cols-4"
-            >
-              <div className="relative md:col-span-2">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Search campaigns..."
-                  className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-400"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                />
-              </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="border-slate-700 bg-slate-800/50 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="border-slate-700 bg-slate-800">
-                  <SelectItem value="All">All Statuses</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Ended">Ended</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+return (
+  <div className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <Navbar />
+    <main className="flex-1">
+      <section className="relative py-20 md:py-32">
+        <NetworkEffect className="absolute inset-0 opacity-30" />
+        <div className="container relative z-10 mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 text-center"
+          >
+            <h1 className="mb-4 text-4xl font-bold md:text-5xl">Explore Campaigns</h1>
+            <p className="mx-auto max-w-2xl text-lg text-slate-400">
+              Discover innovative projects seeking funding and support the ones that inspire you.
+            </p>
+          </motion.div>
 
-              <Select value={voteStatusFilter} onValueChange={setVoteStatusFilter}>
-                <SelectTrigger className="border-slate-700 bg-slate-800/50 text-white">
-                  <SelectValue placeholder="Vote Status" />
-                </SelectTrigger>
-                <SelectContent className="border-slate-700 bg-slate-800">
-                  <SelectItem value="All">All Vote Statuses</SelectItem>
-                  <SelectItem value="Eligible">Eligible</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="NoVotes">No Votes</SelectItem>
-                </SelectContent>
-              </Select>
-            </motion.div>
+          {/* Filters and Search */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8 grid gap-4 md:grid-cols-4"
+          >
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Search campaigns..."
+                className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-400"
+                value={searchQuery}
+                onChange={handleSearch}
+              />
+            </div>
 
-            {/* Sort options
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="border-slate-700 bg-slate-800/50 text-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="border-slate-700 bg-slate-800">
+                <SelectItem value="All">All Statuses</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Ended">Ended</SelectItem>
+                <SelectItem value="Cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={voteStatusFilter} onValueChange={setVoteStatusFilter}>
+              <SelectTrigger className="border-slate-700 bg-slate-800/50 text-white">
+                <SelectValue placeholder="Vote Status" />
+              </SelectTrigger>
+              <SelectContent className="border-slate-700 bg-slate-800">
+                <SelectItem value="All">All Vote Statuses</SelectItem>
+                <SelectItem value="Eligible">Eligible</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Approved">Approved</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="NoVotes">No Votes</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          {/* Sort options
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -283,56 +303,57 @@ export default function CampaignsPage() {
               </div>
             </motion.div> */}
 
-            {/* Campaign grid */}
-            {isLoadingAllCampaigns && isLoadingCampaignAddresses  ? (
-              <div className="flex h-64 items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
+          {/* Campaign grid */}
+          {isLoadingAllCampaigns && isLoadingCampaignAddresses ? (
+            <div className="flex h-64 items-center justify-center">
+              <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
+            </div>
+          ) : displayedCampaigns.length > 0 ? (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {displayedCampaigns.map((campaign, index) => (
+                  <CampaignCard key={campaign.address} address={campaign.address} index={index} />
+                ))}
               </div>
-            ) : displayedCampaigns.length > 0 ? (
-              <>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {displayedCampaigns.map((campaign, index) => (
-                    <CampaignCard key={campaign.address} address={campaign.address} index={index} />
-                  ))}
-                </div>
 
-                {/* Load more button */}
-                {displayedCampaigns.length < filteredCampaigns.length && (
-                  <div className="mt-12 text-center">
-                    <Button
-                      onClick={loadMore}
-                      className="bg-gradient-to-r from-teal-500 to-cyan-600 px-8 hover:shadow-lg hover:shadow-teal-500/20"
-                    >
-                      Load More
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center"
+              {/* Load more button */}
+              {displayedCampaigns.length < filteredCampaigns.length && (
+                <div className="mt-12 text-center">
+                  <Button
+                    onClick={loadMore}
+                    className="bg-gradient-to-r from-teal-500 to-cyan-600 px-8 hover:shadow-lg hover:shadow-teal-500/20"
+                  >
+                    Load More
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center"
+            >
+              <h3 className="mb-2 text-xl font-bold">No campaigns found</h3>
+              <p className="mb-6 text-slate-400">
+                {searchQuery || statusFilter !== "All" || voteStatusFilter !== "All"
+                  ? "Try adjusting your filters or search query"
+                  : "No campaigns have been created yet"}
+              </p>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:shadow-lg hover:shadow-teal-500/20"
               >
-                <h3 className="mb-2 text-xl font-bold">No campaigns found</h3>
-                <p className="mb-6 text-slate-400">
-                  {searchQuery || statusFilter !== "All" || voteStatusFilter !== "All"
-                    ? "Try adjusting your filters or search query"
-                    : "No campaigns have been created yet"}
-                </p>
-                <Button
-                  asChild
-                  className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:shadow-lg hover:shadow-teal-500/20"
-                >
-                  <a href="/create">Create a Campaign</a>
-                </Button>
-              </motion.div>
-            )}
-          </div>
-        </section>
-      </main>
-      <Footer />
-    </div>
-  )
+                <a href="/create">Create a Campaign</a>
+              </Button>
+            </motion.div>
+          )}
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </div>
+)
+
 }

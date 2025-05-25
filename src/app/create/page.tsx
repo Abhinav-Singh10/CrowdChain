@@ -16,8 +16,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { NetworkEffect } from "@/components/network-effect"
 import { CampaignCard } from "@/components/ui/campaign-card"
+import { useActiveAccount } from "thirdweb/react"
+import { ConnectPrompt } from "@/components/connect-prompt"
 
 export default function CreateCampaignPage() {
+  const account = useActiveAccount();
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -29,6 +32,21 @@ export default function CreateCampaignPage() {
     tiers: [{ name: "Supporter", amount: "0.1" }],
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  if (!account) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-950 text-white">
+        <Navbar />
+        <main className="flex-1">
+          <ConnectPrompt
+            title="Features Locked"
+            description="Connect your wallet to explore all the revolutionary features CrowdChain has to offer."
+          />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -239,13 +257,12 @@ export default function CreateCampaignPage() {
                   <div className="relative flex justify-between">
                     <div className="flex flex-col items-center">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          currentStep > 1
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep > 1
                             ? "bg-gradient-to-r from-teal-500 to-cyan-600"
                             : currentStep === 1
                               ? "border-2 border-teal-500 bg-slate-900"
                               : "border border-slate-700 bg-slate-800"
-                        }`}
+                          }`}
                       >
                         {currentStep > 1 ? (
                           <CheckCircle2 className="h-5 w-5" />
@@ -257,13 +274,12 @@ export default function CreateCampaignPage() {
                     </div>
                     <div className="flex flex-col items-center">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          currentStep > 2
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep > 2
                             ? "bg-gradient-to-r from-teal-500 to-cyan-600"
                             : currentStep === 2
                               ? "border-2 border-teal-500 bg-slate-900"
                               : "border border-slate-700 bg-slate-800"
-                        }`}
+                          }`}
                       >
                         {currentStep > 2 ? (
                           <CheckCircle2 className="h-5 w-5" />
@@ -275,11 +291,10 @@ export default function CreateCampaignPage() {
                     </div>
                     <div className="flex flex-col items-center">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          currentStep === 3
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep === 3
                             ? "border-2 border-teal-500 bg-slate-900"
                             : "border border-slate-700 bg-slate-800"
-                        }`}
+                          }`}
                       >
                         <span className="text-sm font-medium">3</span>
                       </div>

@@ -28,7 +28,7 @@ import {
 import { getContract } from "thirdweb"
 import { client } from "@/app/client"
 import { sepolia } from "thirdweb/chains"
-import { useReadContract } from "thirdweb/react"
+import { useActiveAccount, useReadContract } from "thirdweb/react"
 
 // Map status and voteStatus numbers to strings
 const statusMap: Record<number, CampaignDetails['status']> = {
@@ -46,6 +46,7 @@ const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
 };
 
 export default function CampaignDetailsPage() {
+  const account = useActiveAccount();
   const params = useParams()
   const router = useRouter()
   const [campaign, setCampaign] = useState<Campaign>()
