@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { toast, Toaster } from "react-hot-toast"
 import { format, fromUnixTime } from "date-fns"
 import { AlertTriangle, Check, Copy, Twitter } from "lucide-react"
-import { mockUser, getCampaignByAddress, weiToEth, gweiToEth, formatAddress, CampaignDetails } from "@/lib/mockData"
+import { mockUser, formatAddress, CampaignDetails, Campaign, Tier, gweiToEth, weiToEth } from "@/lib/mockData"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -45,27 +45,17 @@ const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
   4: 'Eligible',
 };
 
-type Tier = {
-  name: string,
-  amount: number
-}
-
-type ContractTiers = Tier[];
-
 export default function CampaignDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const [campaign, setCampaign] = useState<any>(null)
+  const [campaign, setCampaign] = useState<Campaign>()
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedTier, setSelectedTier] = useState<number | null>(null)
+  const [selectedTier, setSelectedTier] = useState<number>(0)
   const [voteChoice, setVoteChoice] = useState<string | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
   const [showVoteConfirm, setShowVoteConfirm] = useState(false)
   const [showDonateConfirm, setShowDonateConfirm] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-
-  // Intermediary States for campaign formatting from onchain contract
-  const [contractTiers, setContractTier] = useState<ContractTiers>([]);
 
   const contractAddress = (params.address).toString();
 
@@ -74,6 +64,9 @@ export default function CampaignDetailsPage() {
     chain: sepolia,
     address: contractAddress,
   })
+
+  console.log("Selected Tier: "+ selectedTier);
+  
 
   // ALL CONTRACT DETAILS IMPORTED HERE 
   // 1. goal amount
@@ -127,22 +120,22 @@ export default function CampaignDetailsPage() {
     params: [],
   });
   const title = RawTitle ? RawTitle : "";
-  // 7. Description
+  // 8. Description
   const { data: RawDesc, isPending: isLoadingRawDesc } = useReadContract({
     contract,
     method: "function description() view returns (string)",
     params: [],
   });
   const desc = RawDesc ? RawDesc : "";
-  // 8. Total Donors
+  // 9. Total Donors
   const { data: RawDonorNumber, isPending: isLoadingRawDonorNumber } = useReadContract({
     contract,
     method:
       "function getTotalDonors() view returns (uint256)",
     params: [],
   });
-  const totalDonors = RawDonorNumber ? RawDonorNumber : 0;
-  // 9. Funding Granted
+  const totalDonors = RawDonorNumber ? Number(RawDonorNumber) : 0;
+  // 10. Funding Granted
   const { data: RawFundingGranted, isPending: isLoadingRawFundingGranted } = useReadContract({
     contract,
     method:
@@ -150,98 +143,42 @@ export default function CampaignDetailsPage() {
     params: [],
   });
   const fundingGranted = RawFundingGranted ? Number(RawFundingGranted) : 0;
-  // 10. Owner
+  // 11. Owner
   const { data: RawOwnerData, isPending: isLoadingRawOwnerData } = useReadContract({
     contract,
     method: "function owner() view returns (address)",
     params: [],
   });
   const owner = RawOwnerData ? RawOwnerData.toString() : "";
-  // 11. Tiers
-  // Fetch tier at index 0
-  const { data: tier0, isPending: isPendingTier0 } = useReadContract({
+  // 12. Tiers
+  const { data: RawTierData, isPending: isLoadingTiers } = useReadContract({
     contract,
-    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
-    params: [0n], // Index 0
+    method:
+      "function getAllTiers() view returns ((string name, uint256 amount)[])",
+    params: [],
   });
-
-  // Fetch tier at index 1
-  const { data: tier1, isPending: isPendingTier1 } = useReadContract({
-    contract,
-    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
-    params: [1n], // Index 1
-  });
-  // Fetch tier at index 2
-  const { data: tier2, isPending: isPendingTier2 } = useReadContract({
-    contract,
-    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
-    params: [2n], // Index 2
-  });
-
-  // 12. StartDate
+  const tiers = RawTierData ? RawTierData : [];
+  // 13. StartDate
   const { data: StartDateEpoch, isPending: isLoadingStartDate } = useReadContract({
     contract,
     method: "function startDate() view returns (uint256)",
     params: [],
   });
   const startDate = StartDateEpoch ? Number(StartDateEpoch) : 0
-  // 13.Total Donors
-  const { data: TotalDonors, isPending: isLoadingTotalDonors } = useReadContract({
-    contract,
-    method:
-      "function getTotalDonors() view returns (uint256)",
-    params: [],
-  });
-  const totalDonations = TotalDonors ? Number(TotalDonors) : 0;
 
   // Simulate loading campaign data
   useEffect(() => {
-    if (isPendingTier2 || isPendingTier0 || isPendingTier1 || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingTotalDonors) {
+    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate) {
       setIsLoading(true);
       return;
     }
 
-    const formattedTiers: ContractTiers = [];
+    const formattedTiers: Tier[] = tiers.map(t => ({
+      name: t.name,
+      amount: Number(t.amount)
+    }))
 
-    // Process tier 1
-    if (tier0) {
-      if (tier0[1] > Number.MAX_SAFE_INTEGER) {
-        return;
-      } else {
-        formattedTiers.push({
-          name: tier0[0], // string (e.g., "Supporter")
-          amount: Number(tier0[1]) / 1e9, // Gwei to ETH
-        });
-      }
-    }
-
-    // Process tier 2
-    if (tier1) {
-      if (tier1[1] > Number.MAX_SAFE_INTEGER) {
-        return;
-      } else {
-        formattedTiers.push({
-          name: tier1[0],
-          amount: Number(tier1[1]) / 1e9,
-        });
-      }
-    }
-
-    // Process tier 3
-    if (tier2) {
-      if (tier2[1] > Number.MAX_SAFE_INTEGER) {
-        return;
-      } else {
-        formattedTiers.push({
-          name: tier2[0],
-          amount: Number(tier2[1]) / 1e9,
-        });
-      }
-    }
-
-    setContractTier(formattedTiers);
-
-    const campaignData = {
+    const campaignData: Campaign = {
       address: contractAddress,
       owner: owner,
       title: title,
@@ -253,19 +190,23 @@ export default function CampaignDetailsPage() {
       fundingGranted: fundingGranted,
       status: status,
       voteStatus: voteStatus,
-      totalDonors: JSON.stringify(totalDonors),
-      tiers: contractTiers,
+      totalDonations: totalDonors,
+      tiers: formattedTiers,
       startDate: startDate,
       endDate: endDate,
-      donations: totalDonations,
     }
     if (campaignData) {
       setCampaign(campaignData)
     }
     setIsLoading(false)
-  }, [tier0, tier1, tier2, isPendingTier0, isPendingTier1, isPendingTier2, isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate, isLoadingTotalDonors])
+  }, [isLoadingTiers || isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate])
 
 
+
+
+
+  console.log(`Campaign tier ${campaign?.tiers[selectedTier].amount}`);
+  
 
   // Check if user has already voted
   useEffect(() => {
@@ -474,7 +415,7 @@ export default function CampaignDetailsPage() {
       </div>
     )
   }
-
+  
   if (!campaign) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -493,6 +434,7 @@ export default function CampaignDetailsPage() {
       </div>
     )
   }
+
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -605,8 +547,7 @@ export default function CampaignDetailsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                  
-                        {campaign.tiers.map((tier: any, index: number) => (
+                        {campaign.tiers.map((tier: Tier, index: number) => (
                           <div
                             key={index}
                             className={`rounded-lg border p-4 transition-all ${selectedTier === index
@@ -617,7 +558,7 @@ export default function CampaignDetailsPage() {
                           >
                             <div className="flex items-center justify-between">
                               <h4 className="font-medium text-white">{tier.name}</h4>
-                              <span className="font-bold text-white">{weiToEth(tier.amount).toFixed(2)} ETH</span>
+                              <span className="font-bold text-white">{tier.amount / 1e9} ETH</span>
                             </div>
                           </div>
                         ))}
@@ -867,7 +808,11 @@ export default function CampaignDetailsPage() {
                 {voteChoice === "yes" ? "YES" : "NO"}
               </p>
               <p className="mt-2 text-sm text-slate-400">
-                Your voting power: {weiToEth(campaign.donations[mockUser] || 0).toFixed(2)} ETH
+                Your voting power: {
+                  // weiToEth(campaign.donations[mockUser] || 
+                  0
+                  // ).toFixed(2)
+                } ETH
               </p>
             </div>
 

@@ -1,3 +1,8 @@
+export type Tier = {
+  name: string,
+  amount: number
+}
+
 export type Campaign = {
   address: string 
   owner: string
@@ -9,11 +14,17 @@ export type Campaign = {
   fundingGranted: number // Wei
   status: "Active" | "Ended" | "Cancelled"
   voteStatus: "Active" | "Approved" | "Rejected" | "NoVotes" | "Eligible"
-  totalDonors: number
-  tiers: { name: string; amount: number }[]
+  totalDonors: number // Wei
+  tiers: {
+    name:string,
+    amount: number
+  }[],
   startDate: number // Unix timestamp
   endDate: number // Unix timestamp
-  totalDonations: number // Wei
+  // donations:{
+  //   address: string,
+  //   amount:number,
+  // }
   votes?: {
     amount: number
     description: string

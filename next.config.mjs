@@ -43,6 +43,12 @@ images: {
         port: '',
         pathname: '/jShdDhcX/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'media.cnn.com',
+        port: '',
+        pathname: '/api/v1/images/**',
+      },
     ],
   },
 };

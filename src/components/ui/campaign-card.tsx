@@ -43,41 +43,43 @@ export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
   const contract = getContract({
     client: client,
     chain: sepolia,
-    address:address,
+    address: address,
   })
 
   // ALL CONTRACT DETAILS IMPORTED HERE 
   // 1. goal amount
-  const { data: RawgoalAmount, isPending:isLoadingRawgoalAmount } = useReadContract({
+  const { data: RawgoalAmount, isPending: isLoadingRawgoalAmount } = useReadContract({
     contract,
     method: "function goalAmount() view returns (uint256)",
     params: [],
   });
-  const goalAmount= RawgoalAmount? Number(RawgoalAmount): 0;
+  const goalAmount = RawgoalAmount ? Number(RawgoalAmount) : 0;
   // 2. totalAmountRaised
-  const { data: RawtotalAmountRaised, isPending: isLoadingRawtotalAmountRaised} = useReadContract({
+  const { data: RawtotalAmountRaised, isPending: isLoadingRawtotalAmountRaised } = useReadContract({
     contract,
     method:
       "function totalAmountRaised() view returns (uint256)",
     params: [],
   });
-  const totalAmountRaised = Number(RawtotalAmountRaised);
+  const totalAmountRaised = RawtotalAmountRaised ? Number(RawtotalAmountRaised) : 0;
+  console.log("totalAmountRaised: "+totalAmountRaised/1e9);
+  
   // 3. Campaign Status
-  const { data: IndexdCampaignStatus, isPending :isLoadingIndexdCampaignStatus } = useReadContract({
+  const { data: IndexdCampaignStatus, isPending: isLoadingIndexdCampaignStatus } = useReadContract({
     contract,
     method: "function status() view returns (uint8)",
     params: [],
   });
   const status = IndexdCampaignStatus ? statusMap[IndexdCampaignStatus] : "Active"
   // 4. endDate
-  const { data: EndDateAsEpoch, isPending :isLoadingEndDateAsEpoch } = useReadContract({
+  const { data: EndDateAsEpoch, isPending: isLoadingEndDateAsEpoch } = useReadContract({
     contract,
     method: "function endDate() view returns (uint256)",
     params: [],
   });
   const endDate = EndDateAsEpoch ? Number(EndDateAsEpoch) : 77 // NEED TO FIX THIS
   // 5. VoteStatus
-  const { data: CurrentVoteStatus, isPending :isLoadingCurrentVoteStatus} = useReadContract({
+  const { data: CurrentVoteStatus, isPending: isLoadingCurrentVoteStatus } = useReadContract({
     contract,
     method:
       "function getCurrentVoteStatus() view returns (uint8)",
@@ -85,48 +87,49 @@ export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
   });
   const voteStatus = CurrentVoteStatus ? voteStatusMap[CurrentVoteStatus] : "NoVotes"
   // 6. ImageUrl
-  const { data: RawImageURL, isPending :isLoadingRawImageURL} = useReadContract({
+  const { data: RawImageURL, isPending: isLoadingRawImageURL } = useReadContract({
     contract,
     method: "function imageUrl() view returns (string)",
     params: [],
   });
   const imageUrl = RawImageURL ? RawImageURL : "";
   // 7. Title
-  const { data:RawTitle, isPending :isLoadingRawTitle} = useReadContract({
+  const { data: RawTitle, isPending: isLoadingRawTitle } = useReadContract({
     contract,
     method: "function title() view returns (string)",
     params: [],
   });
   const title = RawTitle ? RawTitle : "";
   // 7. Description
-  const { data:RawDesc, isPending :isLoadingRawDesc} = useReadContract({
+  const { data: RawDesc, isPending: isLoadingRawDesc } = useReadContract({
     contract,
     method: "function description() view returns (string)",
     params: [],
   });
   const desc = RawDesc ? RawDesc : "";
   // 8. Total Donors
-    const { data:RawDonorNumber, isPending :isLoadingRawDonorNumber} = useReadContract({
+  const { data: RawDonorNumber, isPending: isLoadingRawDonorNumber } = useReadContract({
     contract,
     method:
       "function getTotalDonors() view returns (uint256)",
     params: [],
   });
-  const totalDonors= RawDonorNumber? RawDonorNumber:0;
+  const totalDonors = RawDonorNumber ? Number(RawDonorNumber) : 0;
   // 9. Funding Granted
-  const { data:RawFundingGranted, isPending :isLoadingRawFundingGranted} = useReadContract({
+  const { data: RawFundingGranted, isPending: isLoadingRawFundingGranted } = useReadContract({
     contract,
     method:
       "function FundingGranted() view returns (uint256)",
     params: [],
   });
-  const fundingGranted= RawFundingGranted? Number(RawFundingGranted):0;
+  const fundingGranted = RawFundingGranted ? Number(RawFundingGranted) : 0;
 
 
 
   // Calculate progress percentage
   const goalInWei = goalAmount ? Number(goalAmount) * 1e9 : 0 // Convert Gwei to Wei
   const progressPercentage = Math.min(Math.round((totalAmountRaised / goalInWei) * 100), 100)
+  
 
   // Format dates
   const timeLeft =
@@ -203,7 +206,7 @@ export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
             <CircularProgress value={progressPercentage} size={60} strokeWidth={5} />
             <div className="text-right">
               <p className="text-sm text-slate-400">Raised</p>
-              <p className="text-lg font- text-white">{weiToEth(totalAmountRaised).toFixed(2)} ETH</p>
+              <p className="text-lg font- text-white">{(totalAmountRaised/1e18).toFixed(4)} ETH</p>
               <p className="text-xs text-slate-400">of {gweiToEth(goalAmount).toFixed(2)} ETH</p>
             </div>
           </div>
@@ -215,7 +218,7 @@ export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
             </div>
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-xs text-slate-400">Granted</p>
-              <p className="font-bold text-white">{weiToEth(fundingGranted).toFixed(2)} ETH</p>
+              <p className="font-bold text-white">{gweiToEth(fundingGranted).toFixed(2)} ETH</p>
             </div>
           </div>
 
