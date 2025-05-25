@@ -190,7 +190,7 @@ export default function CampaignDetailsPage() {
       fundingGranted: fundingGranted,
       status: status,
       voteStatus: voteStatus,
-      totalDonations: totalDonors,
+      totalDonors: totalDonors,
       tiers: formattedTiers,
       startDate: startDate,
       endDate: endDate,
@@ -205,7 +205,7 @@ export default function CampaignDetailsPage() {
 
 
 
-  console.log(`Campaign tier ${campaign?.tiers[selectedTier].amount}`);
+  console.log(`Selected tier Amount:  ${campaign?.tiers[selectedTier].amount}`);
   
 
   // Check if user has already voted
@@ -224,9 +224,9 @@ export default function CampaignDetailsPage() {
     return Math.min(Math.round((campaign.totalAmountRaised / goalInWei) * 100), 100)
   }
 
-  // Handle donation
+  // Handle donation (Redundant Now)
   const handleDonate = () => {
-    if (!selectedTier) {
+    if (selectedTier==null) {
       toast.error("Please select a donation tier")
       return
     }
@@ -494,11 +494,11 @@ export default function CampaignDetailsPage() {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400 ">Goal</p>
-                            <p className="text-xl font-bold text-white">{gweiToEth(campaign.goalAmount).toFixed(2)} ETH</p>
+                            <p className="text-xl font-bold text-white">{gweiToEth(campaign.goalAmount).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Raised</p>
-                            <p className="text-xl font-bold text-white">{weiToEth(campaign.totalAmountRaised).toFixed(2)} ETH</p>
+                            <p className="text-xl font-bold text-white">{weiToEth(campaign.totalAmountRaised).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Donors</p>
@@ -506,7 +506,7 @@ export default function CampaignDetailsPage() {
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Funds Granted</p>
-                            <p className="text-xl font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(2)} ETH</p>
+                            <p className="text-xl font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(4)} ETH</p>
                           </div>
                         </div>
                       </div>
@@ -589,7 +589,7 @@ export default function CampaignDetailsPage() {
                               <p className="text-sm text-slate-300">You selected</p>
                               <p className="text-lg font-bold text-teal-400">
                                 {campaign.tiers[selectedTier].name} -{" "}
-                                {weiToEth(campaign.tiers[selectedTier].amount).toFixed(2)} ETH
+                                {(campaign.tiers[selectedTier].amount/1e9).toFixed(4)} ETH
                               </p>
                             </div>
                           )}
@@ -768,12 +768,12 @@ export default function CampaignDetailsPage() {
                 You are about to donate to this campaign.
               </DialogDescription>
             </DialogHeader>
-
+  
             {selectedTier !== null && (
               <div className="rounded-lg bg-teal-500/10 p-4 text-center">
                 <p className="text-sm text-slate-300">You are donating</p>
                 <p className="text-xl font-bold text-teal-400">
-                  {weiToEth(campaign.tiers[selectedTier].amount).toFixed(2)} ETH
+                  {(campaign?.tiers[selectedTier].amount/1e9).toFixed(4)} ETH
                 </p>
                 <p className="mt-2 text-sm text-slate-400">Tier: {campaign.tiers[selectedTier].name}</p>
               </div>
