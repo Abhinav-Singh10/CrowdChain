@@ -6,7 +6,7 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowRight, Clock } from "lucide-react"
 import { formatDistanceToNow, fromUnixTime } from "date-fns"
-import { type Campaign, weiToEth, gweiToEth, CampaignDetails } from "@/lib/mockData"
+import { weiToEth, gweiToEth, CampaignDetails } from "@/lib/mockData"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -38,7 +38,6 @@ interface CampaignCardProps {
 
 export function CampaignCard({ address, index = 0 }: CampaignCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [CampaignDetails, setCampaignDetails] = useState<Campaign>();
 
   // Calling real data from the deployed contracts
   const contract = getContract({

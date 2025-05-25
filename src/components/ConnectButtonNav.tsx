@@ -37,7 +37,6 @@ const ConnectButtonNav: React.FC = () => {
   // Log for debugging (optional)
   useEffect(() => {
     const button = connectButtonRef.current?.querySelector('button');
-    console.log('ConnectButton button:', button);
   }, []);
 
   return (

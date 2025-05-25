@@ -77,16 +77,6 @@ export default function CampaignsPage() {
     params: [],
   });
 
-
-  //See if this is needed
-  const { data: TotalCampaignCount, isPending: isLoadingTotalCampaigns } = useReadContract({
-    contract,
-    method:
-      "function totalCampaigns() view returns (uint256)",
-    params: [],
-  });
-
-
   // Loading All Campaigns Data to State
   useEffect(() => {
     if (isLoadingAllCampaigns) {

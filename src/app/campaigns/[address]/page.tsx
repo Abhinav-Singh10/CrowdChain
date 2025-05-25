@@ -5,9 +5,9 @@ import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { toast, Toaster } from "react-hot-toast"
-import { format } from "date-fns"
+import { format, fromUnixTime } from "date-fns"
 import { AlertTriangle, Check, Copy, Twitter } from "lucide-react"
-import { mockUser, getCampaignByAddress, weiToEth, gweiToEth, formatAddress } from "@/lib/mockData"
+import { mockUser, getCampaignByAddress, weiToEth, gweiToEth, formatAddress, CampaignDetails } from "@/lib/mockData"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { getContract } from "thirdweb"
+import { client } from "@/app/client"
+import { sepolia } from "thirdweb/chains"
+import { useReadContract } from "thirdweb/react"
+
+// Map status and voteStatus numbers to strings
+const statusMap: Record<number, CampaignDetails['status']> = {
+  0: 'Active',
+  1: 'Ended',
+  2: 'Cancelled',
+};
+
+const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
+  0: 'Active',
+  1: 'Approved',
+  2: 'Rejected',
+  3: 'NoVotes',
+  4: 'Eligible',
+};
+
+type Tier = {
+  name: string,
+  amount: number
+}
+
+type ContractTiers = Tier[];
 
 export default function CampaignDetailsPage() {
   const params = useParams()
@@ -38,18 +64,208 @@ export default function CampaignDetailsPage() {
   const [showDonateConfirm, setShowDonateConfirm] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
+  // Intermediary States for campaign formatting from onchain contract
+  const [contractTiers, setContractTier] = useState<ContractTiers>([]);
+
+  const contractAddress = (params.address).toString();
+
+  const contract = getContract({
+    client: client,
+    chain: sepolia,
+    address: contractAddress,
+  })
+
+  // ALL CONTRACT DETAILS IMPORTED HERE 
+  // 1. goal amount
+  const { data: RawgoalAmount, isPending: isLoadingRawgoalAmount } = useReadContract({
+    contract,
+    method: "function goalAmount() view returns (uint256)",
+    params: [],
+  });
+  const goalAmount = RawgoalAmount ? Number(RawgoalAmount) : 0;
+  // 2. totalAmountRaised
+  const { data: RawtotalAmountRaised, isPending: isLoadingRawtotalAmountRaised } = useReadContract({
+    contract,
+    method:
+      "function totalAmountRaised() view returns (uint256)",
+    params: [],
+  });
+  const totalAmountRaised = Number(RawtotalAmountRaised);
+  // 3. Campaign Status
+  const { data: IndexdCampaignStatus, isPending: isLoadingIndexdCampaignStatus } = useReadContract({
+    contract,
+    method: "function status() view returns (uint8)",
+    params: [],
+  });
+  const status = IndexdCampaignStatus ? statusMap[IndexdCampaignStatus] : "Active"
+  // 4. endDate
+  const { data: EndDateAsEpoch, isPending: isLoadingEndDateAsEpoch } = useReadContract({
+    contract,
+    method: "function endDate() view returns (uint256)",
+    params: [],
+  });
+  const endDate = EndDateAsEpoch ? Number(EndDateAsEpoch) : 0
+  // 5. VoteStatus
+  const { data: CurrentVoteStatus, isPending: isLoadingCurrentVoteStatus } = useReadContract({
+    contract,
+    method:
+      "function getCurrentVoteStatus() view returns (uint8)",
+    params: [],
+  });
+  const voteStatus = CurrentVoteStatus ? voteStatusMap[CurrentVoteStatus] : "NoVotes"
+  // 6. ImageUrl
+  const { data: RawImageURL, isPending: isLoadingRawImageURL } = useReadContract({
+    contract,
+    method: "function imageUrl() view returns (string)",
+    params: [],
+  });
+  const imageUrl = RawImageURL ? RawImageURL : "";
+  // 7. Title
+  const { data: RawTitle, isPending: isLoadingRawTitle } = useReadContract({
+    contract,
+    method: "function title() view returns (string)",
+    params: [],
+  });
+  const title = RawTitle ? RawTitle : "";
+  // 7. Description
+  const { data: RawDesc, isPending: isLoadingRawDesc } = useReadContract({
+    contract,
+    method: "function description() view returns (string)",
+    params: [],
+  });
+  const desc = RawDesc ? RawDesc : "";
+  // 8. Total Donors
+  const { data: RawDonorNumber, isPending: isLoadingRawDonorNumber } = useReadContract({
+    contract,
+    method:
+      "function getTotalDonors() view returns (uint256)",
+    params: [],
+  });
+  const totalDonors = RawDonorNumber ? RawDonorNumber : 0;
+  // 9. Funding Granted
+  const { data: RawFundingGranted, isPending: isLoadingRawFundingGranted } = useReadContract({
+    contract,
+    method:
+      "function FundingGranted() view returns (uint256)",
+    params: [],
+  });
+  const fundingGranted = RawFundingGranted ? Number(RawFundingGranted) : 0;
+  // 10. Owner
+  const { data: RawOwnerData, isPending: isLoadingRawOwnerData } = useReadContract({
+    contract,
+    method: "function owner() view returns (address)",
+    params: [],
+  });
+  const owner = RawOwnerData ? RawOwnerData.toString() : "";
+  // 11. Tiers
+  // Fetch tier at index 0
+  const { data: tier0, isPending: isPendingTier0 } = useReadContract({
+    contract,
+    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
+    params: [0n], // Index 0
+  });
+
+  // Fetch tier at index 1
+  const { data: tier1, isPending: isPendingTier1 } = useReadContract({
+    contract,
+    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
+    params: [1n], // Index 1
+  });
+  // Fetch tier at index 2
+  const { data: tier2, isPending: isPendingTier2 } = useReadContract({
+    contract,
+    method: 'function tiers(uint256) view returns (string name, uint256 amount)',
+    params: [2n], // Index 2
+  });
+
+  // 12. StartDate
+  const { data: StartDateEpoch, isPending: isLoadingStartDate } = useReadContract({
+    contract,
+    method: "function startDate() view returns (uint256)",
+    params: [],
+  });
+  const startDate = StartDateEpoch ? Number(StartDateEpoch) : 0
+  // 13.Total Donors
+  const { data: TotalDonors, isPending: isLoadingTotalDonors } = useReadContract({
+    contract,
+    method:
+      "function getTotalDonors() view returns (uint256)",
+    params: [],
+  });
+  const totalDonations = TotalDonors ? Number(TotalDonors) : 0;
+
   // Simulate loading campaign data
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const campaignData = getCampaignByAddress(params.address as string)
-      if (campaignData) {
-        setCampaign(campaignData)
-      }
-      setIsLoading(false)
-    }, 1000)
+    if (isPendingTier2 || isPendingTier0 || isPendingTier1 || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingTotalDonors) {
+      setIsLoading(true);
+      return;
+    }
 
-    return () => clearTimeout(timer)
-  }, [params.address])
+    const formattedTiers: ContractTiers = [];
+
+    // Process tier 1
+    if (tier0) {
+      if (tier0[1] > Number.MAX_SAFE_INTEGER) {
+        return;
+      } else {
+        formattedTiers.push({
+          name: tier0[0], // string (e.g., "Supporter")
+          amount: Number(tier0[1]) / 1e9, // Gwei to ETH
+        });
+      }
+    }
+
+    // Process tier 2
+    if (tier1) {
+      if (tier1[1] > Number.MAX_SAFE_INTEGER) {
+        return;
+      } else {
+        formattedTiers.push({
+          name: tier1[0],
+          amount: Number(tier1[1]) / 1e9,
+        });
+      }
+    }
+
+    // Process tier 3
+    if (tier2) {
+      if (tier2[1] > Number.MAX_SAFE_INTEGER) {
+        return;
+      } else {
+        formattedTiers.push({
+          name: tier2[0],
+          amount: Number(tier2[1]) / 1e9,
+        });
+      }
+    }
+
+    setContractTier(formattedTiers);
+
+    const campaignData = {
+      address: contractAddress,
+      owner: owner,
+      title: title,
+      description:
+        desc,
+      imageUrl: imageUrl,
+      goalAmount: goalAmount,
+      totalAmountRaised: totalAmountRaised,
+      fundingGranted: fundingGranted,
+      status: status,
+      voteStatus: voteStatus,
+      totalDonors: JSON.stringify(totalDonors),
+      tiers: contractTiers,
+      startDate: startDate,
+      endDate: endDate,
+      donations: totalDonations,
+    }
+    if (campaignData) {
+      setCampaign(campaignData)
+    }
+    setIsLoading(false)
+  }, [tier0, tier1, tier2, isPendingTier0, isPendingTier1, isPendingTier2, isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate, isLoadingTotalDonors])
+
+
 
   // Check if user has already voted
   useEffect(() => {
@@ -357,11 +573,11 @@ export default function CampaignDetailsPage() {
                         <h3 className="mb-2 text-lg font-medium text-white">Campaign Timeline</h3>
                         <div className="flex items-center space-x-2">
                           <div className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
-                            {format(new Date(campaign.startDate), "MMM d, yyyy")}
+                            {format(new Date(fromUnixTime(campaign.startDate)), "MMM d, yyyy")}
                           </div>
                           <div className="h-0.5 flex-1 bg-gradient-to-r from-teal-500 to-cyan-600" />
                           <div className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
-                            {format(new Date(campaign.endDate), "MMM d, yyyy")}
+                            {format(new Date(fromUnixTime(campaign.endDate)), "MMM d, yyyy")}
                           </div>
                         </div>
                       </div>
@@ -389,14 +605,14 @@ export default function CampaignDetailsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
+                  
                         {campaign.tiers.map((tier: any, index: number) => (
                           <div
                             key={index}
-                            className={`rounded-lg border p-4 transition-all ${
-                              selectedTier === index
-                                ? "border-teal-500 bg-teal-500/10"
-                                : "border-slate-700 bg-slate-800/30 hover:border-slate-600"
-                            } ${campaign.status !== "Active" ? "opacity-50" : "cursor-pointer"}`}
+                            className={`rounded-lg border p-4 transition-all ${selectedTier === index
+                              ? "border-teal-500 bg-teal-500/10"
+                              : "border-slate-700 bg-slate-800/30 hover:border-slate-600"
+                              } ${campaign.status !== "Active" ? "opacity-50" : "cursor-pointer"}`}
                             onClick={() => campaign.status === "Active" && setSelectedTier(index)}
                           >
                             <div className="flex items-center justify-between">
@@ -708,3 +924,5 @@ export default function CampaignDetailsPage() {
     </div>
   )
 }
+
+

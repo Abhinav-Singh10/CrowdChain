@@ -13,7 +13,7 @@ export type Campaign = {
   tiers: { name: string; amount: number }[]
   startDate: number // Unix timestamp
   endDate: number // Unix timestamp
-  donations: { [user: string]: number } // Wei
+  totalDonations: number // Wei
   votes?: {
     amount: number
     description: string
@@ -39,24 +39,24 @@ export const mockUser = "0xUser1234567890abcdef"
 // Sample campaign data
 export const mockCampaigns: Campaign[] = [
   {
-    address: "0x123456789abcdef123456789abcdef123456789a",
-    owner: "0xOwner123456789abcdef123456789abcdef12345",
-    title: "Save Dogs Shelter",
+    address: "0x123456789abcdef123456789abcdef123456789a",  //
+    owner: "0xOwner123456789abcdef123456789abcdef12345",  //
+    title: "Save Dogs Shelter", //
     description:
-      "Help us build a new shelter for abandoned dogs in our community. Your contribution will provide food, medical care, and shelter for dozens of dogs in need. We aim to create a sustainable facility that can house up to 50 dogs at a time, with proper veterinary facilities and adoption programs.",
-    imageUrl: "https://img.freepik.com/free-photo/many-cute-rescue-dogs-shelter-waiting-be-adopted_23-2148682949.jpg",
-    goalAmount: 2000000000, // 2 ETH in Gwei
-    totalAmountRaised: 1500000000000000000, // 1.5 ETH in Wei
-    fundingGranted: 500000000000000000, // 0.5 ETH in Wei
-    status: "Active",
-    voteStatus: "Eligible",
-    totalDonors: 2,
-    tiers: [
+      "Help us build a new shelter for abandoned dogs in our community. Your contribution will provide food, medical care, and shelter for dozens of dogs in need. We aim to create a sustainable facility that can house up to 50 dogs at a time, with proper veterinary facilities and adoption programs.", //
+    imageUrl: "https://img.freepik.com/free-photo/many-cute-rescue-dogs-shelter-waiting-be-adopted_23-2148682949.jpg", //
+    goalAmount: 2000000000, // 2 ETH in Gwei //
+    totalAmountRaised: 1500000000000000000, // 1.5 ETH in Wei //
+    fundingGranted: 500000000000000000, // 0.5 ETH in Wei //
+    status: "Active", //
+    voteStatus: "Eligible", //
+    totalDonors: 2, //
+    tiers: [ // 
       { name: "Supporter", amount: 500000000000000000 }, // 0.5 ETH in Wei
       { name: "Patron", amount: 1000000000000000000 }, // 1 ETH in Wei
     ],
-    startDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
-    endDate: Date.now() + 14 * 24 * 60 * 60 * 1000, // 14 days from now
+    startDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago //
+    endDate: Date.now() + 14 * 24 * 60 * 60 * 1000, // 14 days from now //
     donations: {
       "0xDonor1": 1000000000000000000, // 1 ETH
       "0xDonor2": 500000000000000000, // 0.5 ETH
