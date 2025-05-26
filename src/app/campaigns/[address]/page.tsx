@@ -68,7 +68,7 @@ export default function CampaignDetailsPage() {
   });
   const [votingDetails, setVotingDetails] = useState<Election[]>();
   const [currentVoteId, setCurrentVoteId] = useState<number>(0);
-  const [amountDonated,setAmountDonated]=useState(0);
+  const [amountDonated, setAmountDonated] = useState(0);
 
   const contractAddress = (params.address).toString();
 
@@ -221,13 +221,13 @@ export default function CampaignDetailsPage() {
     params: [BigInt(currentVoteId), account?.address || ""],
   });
   // 3. Amount donated by address
-  const { data:RawDonatedAmount, isPending:isLoadingDonatedAmount } = useReadContract({
+  const { data: RawDonatedAmount, isPending: isLoadingDonatedAmount } = useReadContract({
     contract,
     method:
       "function donations(address) view returns (uint256)",
-    params: [account?.address|| "0xb488C2446c55fc9752fe327B13dbb75B078E4963"],
+    params: [account?.address || "0xb488C2446c55fc9752fe327B13dbb75B078E4963"],
   });
-    useEffect(() => {
+  useEffect(() => {
     if (RawDonatedAmount !== undefined) {
       setAmountDonated(Number(RawDonatedAmount));
     }
@@ -236,7 +236,7 @@ export default function CampaignDetailsPage() {
 
   // Simulate loading campaign data
   useEffect(() => {
-    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingVoteID || isloadingHasVoted || isLoadingOngoingVoteData||isLoadingDonatedAmount) {
+    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingVoteID || isloadingHasVoted || isLoadingOngoingVoteData || isLoadingDonatedAmount) {
       setIsLoading(true);
       return;
     }
@@ -339,18 +339,24 @@ export default function CampaignDetailsPage() {
   // Confirm vote
   const confirmVote = () => {
     // Update local state (in a real app, this would be a blockchain transaction)
-     const transaction = prepareContractCall({
+    const transaction = prepareContractCall({
       contract,
       method:
         "function vote(uint256 _voteId, bool _voteYes)",
-      params: [BigInt(currentVoteId), voteChoice=="yes"? true:false],
+      params: [BigInt(currentVoteId), voteChoice == "yes" ? true : false],
     });
-    sendTransaction(transaction);
-    if (isSuccess) {
-      toast.success(`Vote cast sucessfully`);
-    }else{
-      toast.error(`${error}`)
-    }
+    sendTransaction(transaction, {
+      onSuccess: () => {
+        toast.success("✅ Vote cast successfully!");
+        setShowVoteConfirm(false);
+        setVoteChoice(null);
+      },
+      onError: (e) => {
+        toast.error(`❌ Failed to cast vote: ${e.message}`);
+      },
+    });
+
+
     setShowVoteConfirm(false)
     setVoteChoice(null)
   }
@@ -368,11 +374,19 @@ export default function CampaignDetailsPage() {
         "function startVote(uint256 _amount, string _description)",
       params: [BigInt(Number(fundReleaseData.amount) * 1e9), fundReleaseData.description],
     });
-    sendTransaction(transaction);
-    if (isSuccess) {
-      toast.success(`Funds Allocation Req for: ${(Number(fundReleaseData.amount))} ETH`);
-      toast.success(`Funds Allocation Req Reason: ${fundReleaseData.description}`);
-    }
+    sendTransaction(transaction, {
+      onSuccess: () => {
+        toast.success(`💰 Requested fund release of ${fundReleaseData.amount} ETH`);
+        toast.success(`📝 Reason: ${fundReleaseData.description}`);
+        setShowFundReleaseModal(false);
+      },
+      onError: (e) => {
+        toast.error(`❌ Failed to initiate fund release: ${e.message}`);
+      },
+    });
+
+
+
 
     setShowFundReleaseModal(false);
   }
@@ -380,12 +394,21 @@ export default function CampaignDetailsPage() {
 
   // Confirm cancel campaign
   const confirmCancelCampaign = () => {
-     const transaction = prepareContractCall({
+    const transaction = prepareContractCall({
       contract,
       method: "function cancelCampaign()",
       params: [],
     });
-    sendTransaction(transaction);
+    sendTransaction(transaction, {
+      onSuccess: () => {
+        setShowCancelConfirm(false);
+        toast.success("🚫 Campaign cancelled successfully!");
+      },
+      onError: (e) => {
+        toast.error(`❌ Could not cancel campaign: ${e.message}`);
+      },
+    });
+
     setShowCancelConfirm(false)
     toast.success("Campaign cancelled successfully!")
   }
@@ -411,15 +434,15 @@ export default function CampaignDetailsPage() {
       method: "function finalizeVote(uint256 _voteId)",
       params: [BigInt(currentVoteId)],
     });
-    sendTransaction(transaction);
-    console.log(`Claim Funds isSuccess: ${isSuccess}`);
-    console.log(`Claim Funds failureReason: ${failureReason}`);
-    console.log(`Claim Funds isSuccess: ${error}`);
-    if (isSuccess) {
-      toast.success("Funds Claimed!")
-    } else {
-      toast.error(`Can't claim funds as ${failureReason}`)
-    }
+    sendTransaction(transaction, {
+      onSuccess: () => {
+        toast.success("✅ Funds claimed successfully!");
+      },
+      onError: (e) => {
+        toast.error(`❌ Failed to claim funds: ${e.message}`);
+      },
+    });
+
   }
 
   // Check if user is campaign owner (Done)
@@ -525,7 +548,7 @@ export default function CampaignDetailsPage() {
   console.log(`CurrentVOteId: ` + currentVoteId);
 
   console.log(`FUNDING GRANTED: ${campaign.fundingGranted}`);
-  
+
 
 
   return (
@@ -586,11 +609,11 @@ export default function CampaignDetailsPage() {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400 ">Goal</p>
-                            <p className="text-xl font-bold text-white">{(campaign.goalAmount/1e9).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.goalAmount / 1e9).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Raised</p>
-                            <p className="text-xl font-bold text-white">{(campaign.totalAmountRaised/1e18).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.totalAmountRaised / 1e18).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Donors</p>
@@ -598,7 +621,7 @@ export default function CampaignDetailsPage() {
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Funds Granted</p>
-                            <p className="text-xl font-bold text-white">{(campaign.fundingGranted/1e9).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.fundingGranted / 1e9).toFixed(4)} ETH</p>
                           </div>
                         </div>
                       </div>
@@ -1002,7 +1025,7 @@ export default function CampaignDetailsPage() {
               <p className="mt-2 text-sm text-slate-400">
 
                 Your voting power: {
-                  (amountDonated/1e18).toFixed(4)
+                  (amountDonated / 1e18).toFixed(4)
                 } ETH
               </p>
             </div>
