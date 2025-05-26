@@ -6,8 +6,8 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { toast, Toaster } from "react-hot-toast"
 import { format, fromUnixTime } from "date-fns"
-import { AlertTriangle, Check, Copy, Twitter } from "lucide-react"
-import { mockUser, formatAddress, CampaignDetails, Campaign, Tier, gweiToEth, weiToEth } from "@/lib/mockData"
+import { AlertTriangle, Check, Coins, Copy, Info, Twitter } from "lucide-react"
+import { mockUser, formatAddress, CampaignDetails, Campaign, Tier, gweiToEth, weiToEth, FundReleaseData } from "@/lib/mockData"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,8 @@ import { getContract, prepareContractCall, sendTransaction } from "thirdweb"
 import { client } from "@/app/client"
 import { sepolia } from "thirdweb/chains"
 import { TransactionButton, useActiveAccount, useReadContract } from "thirdweb/react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 // Map status and voteStatus numbers to strings
 const statusMap: Record<number, CampaignDetails['status']> = {
@@ -56,7 +58,12 @@ export default function CampaignDetailsPage() {
   const [hasVoted, setHasVoted] = useState(false)
   const [showVoteConfirm, setShowVoteConfirm] = useState(false)
   const [showDonateConfirm, setShowDonateConfirm] = useState(false)
+  const [showFundReleaseModal, setShowFundReleaseModal] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [fundReleaseData, setFundReleaseData] = useState<FundReleaseData>({
+    amount: 0,
+    description: "",
+  });
 
   const contractAddress = (params.address).toString();
 
@@ -65,9 +72,6 @@ export default function CampaignDetailsPage() {
     chain: sepolia,
     address: contractAddress,
   })
-
-  console.log("Selected Tier: " + selectedTier);
-
 
   // ALL CONTRACT DETAILS IMPORTED HERE 
   // 1. goal amount
@@ -203,12 +207,6 @@ export default function CampaignDetailsPage() {
   }, [isLoadingTiers || isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate])
 
 
-
-
-
-  console.log(`Selected tier Amount:  ${campaign?.tiers[selectedTier].amount}`);
-
-
   // Check if user has already voted
   useEffect(() => {
     if (campaign?.votes?.[0]?.status === "Active") {
@@ -258,7 +256,7 @@ export default function CampaignDetailsPage() {
     const updatedCampaign = { ...campaign }
     const vote = updatedCampaign.votes[0]
 
-    // Add vote weight based on user's donation
+    // // Add vote weight based on user's donation
     const userDonation = updatedCampaign.donations[mockUser] || 0
 
     if (voteChoice === "yes") {
@@ -271,36 +269,40 @@ export default function CampaignDetailsPage() {
     setShowVoteConfirm(false)
     setVoteChoice(null)
     setHasVoted(true)
-
-    toast.success(`Vote cast successfully!`)
   }
 
   // Handle start vote (for campaign owner)
   const handleStartVote = () => {
-    // In a real app, this would open a form to set vote parameters
-    // For now, just create a mock vote
-    const updatedCampaign = { ...campaign }
-
-    updatedCampaign.voteStatus = "Active"
-    updatedCampaign.votes = [
-      {
-        amount: updatedCampaign.totalAmountRaised * 0.3, // 30% of raised funds
-        description: "Release funds for project development",
-        endTime: Date.now() + 30 * 60 * 1000, // 30 minutes from now
-        yesWeight: 0,
-        noWeight: 0,
-        status: "Active",
-      },
-    ]
-
-    setCampaign(updatedCampaign)
-    toast.success("Vote started successfully!")
+    setShowFundReleaseModal(true);
   }
 
   // Handle cancel campaign (for campaign owner)
   const handleCancelCampaign = () => {
     setShowCancelConfirm(true)
   }
+
+  // Handle Owner Initiating the voting/funding release process
+  const handleInitiateFundRelease = (fundReleaseData: { amount: number, description: string }) => {
+    // const { mutate: sendTransaction } = useSendTransaction();
+
+    // toast.success(Funds Allocated: ${BigInt(Number(fundReleaseData.amount)*1e18)});
+    toast.success(`Funds Allocated: ${fundReleaseData.amount}`);
+    console.log(`Desc: ${fundReleaseData.description}`);
+
+
+    // const onClick = () => {
+    //   const transaction = prepareContractCall({
+    //     contract,
+    //     method:
+    //       "function startVote(uint256 _amount, string _description)",
+    //     params: [BigInt(Number(fundReleaseData.amount)*1e18), fundReleaseData.description],
+    //   });
+    //   sendTransaction(transaction);
+    toast.success(`Vote cast successfully!`)
+    // };
+    setShowFundReleaseModal(false);
+  }
+
 
   // Confirm cancel campaign
   const confirmCancelCampaign = () => {
@@ -776,21 +778,98 @@ export default function CampaignDetailsPage() {
                   contract,
                   method: "function donate() payable",
                   params: [],
-                  value: BigInt(campaign.tiers[selectedTier].amount*1e9),
+                  value: BigInt(campaign.tiers[selectedTier].amount * 1e9),
                 })}
                 onTransactionConfirmed={async () => {
                   setShowDonateConfirm(false)
                   setSelectedTier(0)
                   toast.success(`Donated ${(campaign.tiers[selectedTier].amount).toFixed(4)} Wei successfully!`)
                 }}
-                onError={async(e)=> toast.error(`Error in transaction: ${e}
-                  Trying to donate: ${BigInt(campaign.tiers[selectedTier].amount*1e9)} Wei`)}
+                onError={async (e) => toast.error(`Error in transaction: ${e}
+                  Trying to donate: ${BigInt(campaign.tiers[selectedTier].amount * 1e9)} Wei`)}
                 className="bg-gradient-to-r from-teal-500 to-cyan-600">
                 Confirm Donation
               </TransactionButton>
 
 
 
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Owner Fund Release Initiation Modal */}
+        <Dialog open={showFundReleaseModal} onOpenChange={setShowFundReleaseModal}>
+          <DialogContent className="border-slate-700 bg-slate-900 text-white sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Initiate Fund Release</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Create a vote to release funds from your campaign.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="amount" className="text-sm font-medium">
+                  Amount (ETH) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={fundReleaseData.amount || ""}
+                    onChange={(e) =>
+                      setFundReleaseData((prev) => ({
+                        ...prev,
+                        amount: parseFloat(e.target.value) || 0, // fallback for NaN
+                      }))
+                    }
+                    placeholder="0.5"
+                    className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500"
+                  />
+
+                  <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="description" className="text-sm font-medium">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  id="description"
+                  value={fundReleaseData.description}
+                  onChange={(e) => setFundReleaseData((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe what the funds will be used for..."
+                  className="min-h-24 border-slate-700 bg-slate-800/50 text-white placeholder:text-slate-500"
+                />
+              </div>
+
+              <div className="rounded-lg bg-teal-500/10 p-3">
+                <div className="flex items-start">
+                  <Info className="mr-2 mt-0.5 h-4 w-4 text-teal-400" />
+                  <div>
+                    <p className="text-sm text-teal-400">Fund Release Vote</p>
+                    <p className="text-xs text-slate-300">
+                      This will create a vote for your supporters to approve the release of the specified amount.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-col sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => setShowFundReleaseModal(false)}
+                className="mb-2 border-slate-700 bg-slate-800 sm:mb-0"
+              >
+                Cancel
+              </Button>
+              <Button onClick={()=>handleInitiateFundRelease(fundReleaseData)} className="bg-gradient-to-r from-teal-500 to-cyan-600">
+                Initiate Fund Release Process
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

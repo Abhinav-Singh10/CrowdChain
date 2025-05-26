@@ -3,6 +3,11 @@ export type Tier = {
   amount: number
 }
 
+export type FundReleaseData = {
+  amount: number;
+  description: string;
+};
+
 export type Campaign = {
   address: string 
   owner: string
