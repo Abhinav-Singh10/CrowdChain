@@ -262,7 +262,7 @@ export default function DashboardPage() {
                       </div>
                       <CardTitle className="mb-2">No Campaigns Yet</CardTitle>
                       <CardDescription className="mb-6 text-slate-400">
-                        You haven't created any campaigns yet. Start your first campaign now!
+                        You haven&apos;t created any campaigns yet. Start your first campaign now!
                       </CardDescription>
                       <Button asChild className="bg-gradient-to-r from-teal-500 to-cyan-600">
                         <a href="/create">Create Campaign</a>
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                       </div>
                       <CardTitle className="mb-2">No Donations Yet</CardTitle>
                       <CardDescription className="mb-6 text-slate-400">
-                        You haven't donated to any campaigns yet. Explore campaigns to support!
+                        You haven&apos;t donated to any campaigns yet. Explore campaigns to support!
                       </CardDescription>
                       <Button asChild className="bg-gradient-to-r from-teal-500 to-cyan-600">
                         <a href="/campaigns">Explore Campaigns</a>
