@@ -380,19 +380,20 @@ export default function CampaignDetailsPage() {
 
   // Confirm cancel campaign
   const confirmCancelCampaign = () => {
-    const updatedCampaign = { ...campaign }
-    updatedCampaign.status = "Cancelled"
-    updatedCampaign.voteStatus = "NoVotes"
-
-    setCampaign(updatedCampaign)
+     const transaction = prepareContractCall({
+      contract,
+      method: "function cancelCampaign()",
+      params: [],
+    });
+    sendTransaction(transaction);
     setShowCancelConfirm(false)
     toast.success("Campaign cancelled successfully!")
   }
 
   // Share campaign
   const handleShare = (platform: string) => {
-    const campaignUrl = `${window.location.origin}/campaigns/${campaign.address}`
-    const shareText = `Support ${campaign.title} on CrowdChain! ${campaignUrl} #Crowdfunding #Web3`
+    const campaignUrl = `${window.location.origin}/campaigns/${campaign!.address}`
+    const shareText = `Support ${campaign!.title} on CrowdChain! ${campaignUrl} #Crowdfunding #Web3`
 
     if (platform === "twitter") {
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank")
