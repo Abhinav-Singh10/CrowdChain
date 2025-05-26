@@ -47,6 +47,8 @@ const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
   4: 'Eligible',
 };
 
+type Election = [bigint, string, bigint, bigint, bigint, bigint, number]
+
 export default function CampaignDetailsPage() {
   const account = useActiveAccount();
   const params = useParams()
@@ -55,7 +57,6 @@ export default function CampaignDetailsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTier, setSelectedTier] = useState<number>(0)
   const [voteChoice, setVoteChoice] = useState<string | null>(null)
-  const [hasVoted, setHasVoted] = useState(false)
   const [showVoteConfirm, setShowVoteConfirm] = useState(false)
   const [showDonateConfirm, setShowDonateConfirm] = useState(false)
   const [showFundReleaseModal, setShowFundReleaseModal] = useState(false)
@@ -64,6 +65,8 @@ export default function CampaignDetailsPage() {
     amount: 0,
     description: "",
   });
+  const [votingDetails, setVotingDetails] = useState<Election[]>();
+  const [currentVoteId,setCurrentVoteId]= useState<number>(0);
 
   const contractAddress = (params.address).toString();
 
@@ -171,20 +174,50 @@ export default function CampaignDetailsPage() {
   });
   const startDate = StartDateEpoch ? Number(StartDateEpoch) : 0
   // 14. All Donors
-  
+  const { data: RawAllDonors, isPending: isLoadingAllDonors } = useReadContract({
+    contract,
+    method:
+      "function getAllDonors() view returns (address[])",
+    params: [],
+  });
+  const AllDonors = RawAllDonors ? RawAllDonors : [""];
+  // 15. CurrentVoteId
+  const { data: RawCurrentVoteId, isPending: isLoadingVoteID } = useReadContract({
+    contract,
+    method:
+      "function getCurrentVoteId() view returns (uint256)",
+    params: [],
+  });
+  if (RawCurrentVoteId) {
+    setCurrentVoteId(Number(RawCurrentVoteId));
+  }
+  // 16. Ongoing voting details
+  const { data: RawOngoingVoteData, isPending: isLoadingOngoingVoteData } = useReadContract({
+    contract,
+    method:
+      "function votes(uint256) view returns (uint256 amount, string description, uint256 startTime, uint256 endTime, uint256 yesWeight, uint256 noWeight, uint8 status)",
+    params: [BigInt(currentVoteId)],
+  });
+  const ongoingVoteDetails = RawOngoingVoteData ? RawOngoingVoteData : null;
 
   // Contract Checks
   // 1. isVoteEligible
-    const { data:isVoteEligible, isPending:isLoadingvoteCheck } = useReadContract({
+  const { data: isVoteEligible, isPending: isLoadingvoteCheck } = useReadContract({
     contract,
     method: "function isVoteEligible() view returns (bool)",
     params: [],
   });
-
+  // 2. HasVoted
+    const { data:hasVoted, isPending:isloadingHasVoted } = useReadContract({
+    contract,
+    method:
+      "function hasVoted(uint256, address) view returns (bool)",
+    params: [BigInt(currentVoteId),account?.address|| ""],
+  });
 
   // Simulate loading campaign data
   useEffect(() => {
-    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate) {
+    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate||isLoadingVoteID||isloadingHasVoted) {
       setIsLoading(true);
       return;
     }
@@ -193,6 +226,19 @@ export default function CampaignDetailsPage() {
       name: t.name,
       amount: Number(t.amount)
     }))
+
+    const formattedDonors: string[] = [...AllDonors];
+
+
+    if (ongoingVoteDetails !== null) {
+      const formattedVoteDetails: Election = [...ongoingVoteDetails];
+      if (votingDetails) {
+        setVotingDetails([...votingDetails ,formattedVoteDetails]);
+      }else{
+        setVotingDetails([formattedVoteDetails])
+      }
+    }
+
 
     const campaignData: Campaign = {
       address: contractAddress,
@@ -210,23 +256,46 @@ export default function CampaignDetailsPage() {
       tiers: formattedTiers,
       startDate: startDate,
       endDate: endDate,
-
+      AllDonors: formattedDonors,
     }
     if (campaignData) {
       setCampaign(campaignData)
     }
     setIsLoading(false)
-  }, [isLoadingTiers || isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate||isLoadingvoteCheck||contractAddress||desc||endDate||fundingGranted||goalAmount||imageUrl||isLoadingRawgoalAmount||isLoadingTiers||owner||startDate||status||tiers||title||totalAmountRaised||totalDonors||voteStatus])
-
-
-  // Check if user has already voted
-  useEffect(() => {
-    if (campaign?.votes?.[0]?.status === "Active") {
-      // In a real app, we would check if the user has voted
-      // For now, just set a random value
-      setHasVoted(Math.random() > 0.5)
-    }
-  }, [campaign])
+  }, [
+    isLoadingTiers,
+    isLoadingRawgoalAmount,
+    isLoadingRawtotalAmountRaised,
+    isLoadingIndexdCampaignStatus,
+    isLoadingEndDateAsEpoch,
+    isLoadingCurrentVoteStatus,
+    isLoadingRawImageURL,
+    isLoadingRawTitle,
+    isLoadingRawDesc,
+    isLoadingRawDonorNumber,
+    isLoadingRawFundingGranted,
+    isLoadingRawOwnerData,
+    isLoadingStartDate,
+    isLoadingvoteCheck,
+    contractAddress,
+    desc,
+    endDate,
+    fundingGranted,
+    goalAmount,
+    imageUrl,
+    owner,
+    startDate,
+    status,
+    tiers,
+    title,
+    totalAmountRaised,
+    totalDonors,
+    voteStatus,
+    isLoadingVoteID,
+    isLoadingAllDonors,
+    isloadingHasVoted
+  ]
+  )
 
   // Calculate progress percentage (Done)
   const calculateProgress = () => {
@@ -244,17 +313,17 @@ export default function CampaignDetailsPage() {
     setShowDonateConfirm(true)
   }
 
-  // Confirm donation
-  const confirmDonate = () => {
-    const tierAmount = campaign?.tiers[selectedTier].amount || 0;
+  // // Confirm donation
+  // const confirmDonate = () => {
+  //   const tierAmount = campaign?.tiers[selectedTier].amount || 0;
 
 
-    sendTransaction(transaction);
-    setShowDonateConfirm(false)
-    setSelectedTier(0)
+  //   sendTransaction(transaction);
+  //   setShowDonateConfirm(false)
+  //   setSelectedTier(0)
 
-    toast.success(`Donated ${weiToEth(tierAmount)} ETH successfully!`)
-  }
+  //   toast.success(`Donated ${weiToEth(tierAmount)} ETH successfully!`)
+  // }
 
   // Handle vote
   const handleVote = (choice: string) => {
@@ -344,8 +413,7 @@ export default function CampaignDetailsPage() {
   }
 
   // Check if user has donated
-  const userDonation = campaign?.donations?.[mockUser] || 0
-  const hasDonated = userDonation > 0
+  const hasDonated = campaign && account ? campaign.AllDonors.includes(account.address): false;
 
   // Status badge color (Done)
   const getStatusColor = (status: string) => {
@@ -433,6 +501,12 @@ export default function CampaignDetailsPage() {
     )
   }
 
+  console.log(`Campaign Status: `+ campaign.voteStatus);
+  console.log(`Campaign Voting Details: `+ votingDetails);
+  console.log(`Campaign Voting Details length: `+ votingDetails?.length);
+  console.log(Boolean(campaign.voteStatus && votingDetails && votingDetails?.length));
+  
+  
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -605,33 +679,34 @@ export default function CampaignDetailsPage() {
                   )}
 
                   {/* Vote panel */}
-                  {campaign.voteStatus === "Active" && campaign.votes && campaign.votes.length > 0 && (
+                  {(campaign.voteStatus === "Active" || campaign.voteStatus==="NoVotes") && votingDetails && votingDetails.length > 0  && (
                     <Card className="mb-6 border-slate-800 bg-slate-900/50 backdrop-blur">
                       <CardHeader>
                         <CardTitle>Active Vote</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="mb-4">
-                          <p className="mb-2 text-sm font-medium text-white">{campaign.votes[0].description}</p>
+                          <p className="mb-2 text-sm font-medium text-white">{votingDetails[currentVoteId][1]}</p>
                           <p className="mb-4 text-sm text-slate-400">
-                            Amount: {weiToEth(campaign.votes[0].amount).toFixed(2)} ETH
+                            Amount: {((Number(votingDetails[currentVoteId][0]))/1e9).toFixed(4)} ETH
                           </p>
 
                           <div className="mb-4">
-                            <VoteTimer endTime={campaign.votes[0].endTime} />
+                            {/* Might lose precision here */}
+                            <VoteTimer endTime={Number(votingDetails[currentVoteId][3])*1000} /> 
                           </div>
 
                           <div className="mb-4 grid grid-cols-2 gap-4">
                             <div className="rounded-lg bg-green-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">Yes</p>
                               <p className="font-bold text-green-400">
-                                {weiToEth(campaign.votes[0].yesWeight).toFixed(2)} ETH
+                                {(Number(votingDetails[currentVoteId][4])/1e9).toFixed(4)} ETH
                               </p>
                             </div>
                             <div className="rounded-lg bg-red-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">No</p>
                               <p className="font-bold text-red-400">
-                                {weiToEth(campaign.votes[0].noWeight).toFixed(2)} ETH
+                                {(Number(votingDetails[currentVoteId][5])/1e9).toFixed(4)} ETH
                               </p>
                             </div>
                           </div>
