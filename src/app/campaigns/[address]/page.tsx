@@ -28,7 +28,7 @@ import {
 import { getContract, prepareContractCall, sendTransaction } from "thirdweb"
 import { client } from "@/app/client"
 import { sepolia } from "thirdweb/chains"
-import { TransactionButton, useActiveAccount, useReadContract } from "thirdweb/react"
+import { TransactionButton, useActiveAccount, useReadContract, useSendTransaction } from "thirdweb/react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -53,6 +53,7 @@ export default function CampaignDetailsPage() {
   const account = useActiveAccount();
   const params = useParams()
   const router = useRouter()
+  const { mutate: sendTransaction, isSuccess, failureReason, error } = useSendTransaction();
   const [campaign, setCampaign] = useState<Campaign>()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTier, setSelectedTier] = useState<number>(0)
@@ -66,7 +67,7 @@ export default function CampaignDetailsPage() {
     description: "",
   });
   const [votingDetails, setVotingDetails] = useState<Election[]>();
-  const [currentVoteId,setCurrentVoteId]= useState<number>(0);
+  const [currentVoteId, setCurrentVoteId] = useState<number>(0);
 
   const contractAddress = (params.address).toString();
 
@@ -188,9 +189,12 @@ export default function CampaignDetailsPage() {
       "function getCurrentVoteId() view returns (uint256)",
     params: [],
   });
-  if (RawCurrentVoteId) {
-    setCurrentVoteId(Number(RawCurrentVoteId));
-  }
+  useEffect(() => {
+    if (RawCurrentVoteId !== undefined) {
+      setCurrentVoteId(Number(RawCurrentVoteId));
+    }
+  }, [RawCurrentVoteId]);
+
   // 16. Ongoing voting details
   const { data: RawOngoingVoteData, isPending: isLoadingOngoingVoteData } = useReadContract({
     contract,
@@ -199,6 +203,7 @@ export default function CampaignDetailsPage() {
     params: [BigInt(currentVoteId)],
   });
   const ongoingVoteDetails = RawOngoingVoteData ? RawOngoingVoteData : null;
+  // 
 
   // Contract Checks
   // 1. isVoteEligible
@@ -208,16 +213,16 @@ export default function CampaignDetailsPage() {
     params: [],
   });
   // 2. HasVoted
-    const { data:hasVoted, isPending:isloadingHasVoted } = useReadContract({
+  const { data: hasVoted, isPending: isloadingHasVoted } = useReadContract({
     contract,
     method:
       "function hasVoted(uint256, address) view returns (bool)",
-    params: [BigInt(currentVoteId),account?.address|| ""],
+    params: [BigInt(currentVoteId), account?.address || ""],
   });
 
   // Simulate loading campaign data
   useEffect(() => {
-    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate||isLoadingVoteID||isloadingHasVoted) {
+    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingVoteID || isloadingHasVoted||isLoadingOngoingVoteData) {
       setIsLoading(true);
       return;
     }
@@ -232,11 +237,7 @@ export default function CampaignDetailsPage() {
 
     if (ongoingVoteDetails !== null) {
       const formattedVoteDetails: Election = [...ongoingVoteDetails];
-      if (votingDetails) {
-        setVotingDetails([...votingDetails ,formattedVoteDetails]);
-      }else{
         setVotingDetails([formattedVoteDetails])
-      }
     }
 
 
@@ -293,7 +294,8 @@ export default function CampaignDetailsPage() {
     voteStatus,
     isLoadingVoteID,
     isLoadingAllDonors,
-    isloadingHasVoted
+    isloadingHasVoted,
+    isLoadingOngoingVoteData
   ]
   )
 
@@ -312,18 +314,6 @@ export default function CampaignDetailsPage() {
     }
     setShowDonateConfirm(true)
   }
-
-  // // Confirm donation
-  // const confirmDonate = () => {
-  //   const tierAmount = campaign?.tiers[selectedTier].amount || 0;
-
-
-  //   sendTransaction(transaction);
-  //   setShowDonateConfirm(false)
-  //   setSelectedTier(0)
-
-  //   toast.success(`Donated ${weiToEth(tierAmount)} ETH successfully!`)
-  // }
 
   // Handle vote
   const handleVote = (choice: string) => {
@@ -359,23 +349,18 @@ export default function CampaignDetailsPage() {
 
   // Handle Owner Initiating the voting/funding release process
   const handleInitiateFundRelease = (fundReleaseData: { amount: number, description: string }) => {
-    // const { mutate: sendTransaction } = useSendTransaction();
+    const transaction = prepareContractCall({
+      contract,
+      method:
+        "function startVote(uint256 _amount, string _description)",
+      params: [BigInt(Number(fundReleaseData.amount) * 1e9), fundReleaseData.description],
+    });
+    sendTransaction(transaction);
+    if (isSuccess) {
+      toast.success(`Funds Allocation Req for: ${(Number(fundReleaseData.amount))} ETH`);
+      toast.success(`Funds Allocation Req Reason: ${fundReleaseData.description}`);
+    }
 
-    // toast.success(Funds Allocated: ${BigInt(Number(fundReleaseData.amount)*1e18)});
-    toast.success(`Funds Allocated: ${fundReleaseData.amount}`);
-    console.log(`Desc: ${fundReleaseData.description}`);
-
-
-    // const onClick = () => {
-    //   const transaction = prepareContractCall({
-    //     contract,
-    //     method:
-    //       "function startVote(uint256 _amount, string _description)",
-    //     params: [BigInt(Number(fundReleaseData.amount)*1e18), fundReleaseData.description],
-    //   });
-    //   sendTransaction(transaction);
-    toast.success(`Vote cast successfully!`)
-    // };
     setShowFundReleaseModal(false);
   }
 
@@ -404,6 +389,25 @@ export default function CampaignDetailsPage() {
     }
   }
 
+
+  // Claim Funds Handling
+  const handleClaimFunds = () => {
+    const transaction = prepareContractCall({
+      contract,
+      method: "function finalizeVote(uint256 _voteId)",
+      params: [BigInt(currentVoteId)],
+    });
+    sendTransaction(transaction);
+    console.log(`Claim Funds isSuccess: ${isSuccess}`);
+    console.log(`Claim Funds failureReason: ${failureReason}`);
+    console.log(`Claim Funds isSuccess: ${error}`);
+    if (isSuccess) {
+      toast.success("Funds Claimed!")
+    }else{
+      toast.error(`Can't claim funds as ${failureReason}`)
+    }
+  }
+
   // Check if user is campaign owner (Done)
   const isOwner = campaign?.owner === account?.address
 
@@ -413,7 +417,7 @@ export default function CampaignDetailsPage() {
   }
 
   // Check if user has donated
-  const hasDonated = campaign && account ? campaign.AllDonors.includes(account.address): false;
+  const hasDonated = campaign && account ? campaign.AllDonors.includes(account.address) : false;
 
   // Status badge color (Done)
   const getStatusColor = (status: string) => {
@@ -501,12 +505,13 @@ export default function CampaignDetailsPage() {
     )
   }
 
-  console.log(`Campaign Status: `+ campaign.voteStatus);
-  console.log(`Campaign Voting Details: `+ votingDetails);
-  console.log(`Campaign Voting Details length: `+ votingDetails?.length);
-  console.log(Boolean(campaign.voteStatus && votingDetails && votingDetails?.length));
+  console.log(`Campaign Status: ` + campaign.voteStatus);
+  console.log(`Campaign Voting Details: ` + votingDetails);
+  console.log(`Campaign Voting Details length: ` + votingDetails?.length);
+  console.log(`CurrentVOteId: ` + currentVoteId);
   
-  
+
+
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -679,34 +684,34 @@ export default function CampaignDetailsPage() {
                   )}
 
                   {/* Vote panel */}
-                  {(campaign.voteStatus === "Active" || campaign.voteStatus==="NoVotes") && votingDetails && votingDetails.length > 0  && (
+                  {(campaign.voteStatus === "Active" || campaign.voteStatus === "NoVotes") && votingDetails && votingDetails.length > 0 && (
                     <Card className="mb-6 border-slate-800 bg-slate-900/50 backdrop-blur">
                       <CardHeader>
                         <CardTitle>Active Vote</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="mb-4">
-                          <p className="mb-2 text-sm font-medium text-white">{votingDetails[currentVoteId][1]}</p>
+                          <p className="mb-2 text-sm font-medium text-white">{votingDetails[0][1]}</p>
                           <p className="mb-4 text-sm text-slate-400">
-                            Amount: {((Number(votingDetails[currentVoteId][0]))/1e9).toFixed(4)} ETH
+                            Amount: {((Number(votingDetails[0][0])) / 1e9).toFixed(4)} ETH
                           </p>
 
                           <div className="mb-4">
                             {/* Might lose precision here */}
-                            <VoteTimer endTime={Number(votingDetails[currentVoteId][3])*1000} /> 
+                            <VoteTimer endTime={Number(votingDetails[0][3]) * 1000} />
                           </div>
 
                           <div className="mb-4 grid grid-cols-2 gap-4">
                             <div className="rounded-lg bg-green-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">Yes</p>
                               <p className="font-bold text-green-400">
-                                {(Number(votingDetails[currentVoteId][4])/1e9).toFixed(4)} ETH
+                                {(Number(votingDetails[0][4]) / 1e9).toFixed(4)} ETH
                               </p>
                             </div>
                             <div className="rounded-lg bg-red-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">No</p>
                               <p className="font-bold text-red-400">
-                                {(Number(votingDetails[currentVoteId][5])/1e9).toFixed(4)} ETH
+                                {(Number(votingDetails[0][5]) / 1e9).toFixed(4)} ETH
                               </p>
                             </div>
                           </div>
@@ -733,6 +738,11 @@ export default function CampaignDetailsPage() {
                             <AlertTriangle className="mx-auto mb-2 h-5 w-5" />
                             You need to donate to vote
                           </div>
+                        )}
+                        {isOwner && (
+                          <Button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleClaimFunds}>
+                            Claim Funds
+                          </Button>
                         )}
                       </CardContent>
                     </Card>
@@ -903,8 +913,8 @@ export default function CampaignDetailsPage() {
                   <Input
                     id="amount"
                     type="number"
-                    step="0.01"
-                    min="0.01"
+                    step="0.0001"
+                    min="0.0001"
                     value={fundReleaseData.amount || ""}
                     onChange={(e) =>
                       setFundReleaseData((prev) => ({
