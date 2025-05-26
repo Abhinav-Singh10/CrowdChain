@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { NetworkEffect } from "@/components/network-effect"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useActiveAccount, useReadContract } from "thirdweb/react"
+import { useActiveAccount, useReadContract, useWalletBalance } from "thirdweb/react"
 import { ConnectPrompt } from "@/components/connect-prompt"
 import { getContract } from "thirdweb"
 import { client } from "../client"
@@ -32,6 +32,12 @@ export default function DashboardPage() {
     chain: sepolia,
     address: CROWDFUDNING_FACTORY,
   })
+
+  const { data: Funds, isLoading: isLoadingBalance, } = useWalletBalance({
+    chain: sepolia,
+    address: account?.address,
+    client,
+  });
 
   // 1. Get All User Campaigns
   const { data: RawUserCampaigns, isPending: isLoadingUserCampaigns } = useReadContract({
@@ -176,8 +182,12 @@ export default function DashboardPage() {
                   <h1 className="text-3xl font-bold md:text-4xl">My Dashboard</h1>
                   <div className="flex items-center">
                     <Wallet className="mr-2 h-4 w-4 text-slate-400" />
-                    <span className="font-mono text-sm text-slate-400">{formatAddress(mockUser)}</span>
+                    <span className="font-mono text-sm text-slate-400">{formatAddress(account.address)}</span>
                   </div>
+                  {isLoadingBalance && (<div className="text-right">
+                    <p className="text-sm text-slate-400">Current Balance</p>
+                    <p className="text-3xl font-bold text-teal-400">{Funds} ETH</p>
+                  </div>)}
                 </div>
               </div>
 
@@ -186,15 +196,15 @@ export default function DashboardPage() {
                   <div className="grid gap-6 md:grid-cols-3">
                     <div className="rounded-lg bg-slate-800/50 p-4 text-center">
                       <p className="text-sm text-slate-400">My Campaigns</p>
-                      <p className="text-2xl font-bold">{campaigns.length}</p>
+                      <p className="text-2xl font-bold text-white">{campaigns.length}</p>
                     </div>
                     <div className="rounded-lg bg-slate-800/50 p-4 text-center">
                       <p className="text-sm text-slate-400">Campaigns Supported</p>
-                      <p className="text-2xl font-bold">{myDonations.length}</p>
+                      <p className="text-2xl font-bold text-white">{myDonations.length}</p>
                     </div>
                     <div className="rounded-lg bg-slate-800/50 p-4 text-center">
                       <p className="text-sm text-slate-400">Total Donated</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-white">
                         {weiToEth(
                           myDonations.reduce((total, campaign) => total + (campaign.donations[mockUser] || 0), 0),
                         ).toFixed(2)}{" "}
@@ -236,7 +246,7 @@ export default function DashboardPage() {
 
                       <Card className="flex h-full flex-col items-center justify-center border-dashed border-slate-800 bg-slate-900/30 p-6 text-center hover:border-slate-700">
                         <PlusCircle className="mb-4 h-12 w-12 text-slate-400" />
-                        <h3 className="mb-2 text-xl font-medium">Create New Campaign</h3>
+                        <h3 className="mb-2 text-xl font-medium text-white">Create New Campaign</h3>
                         <p className="mb-6 text-sm text-slate-400">
                           Start a new crowdfunding campaign for your project
                         </p>

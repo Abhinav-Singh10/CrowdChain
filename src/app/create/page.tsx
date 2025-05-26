@@ -16,10 +16,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { NetworkEffect } from "@/components/network-effect"
 import { CampaignCard } from "@/components/ui/campaign-card"
-import { useActiveAccount } from "thirdweb/react"
+import { useActiveAccount, useSendTransaction } from "thirdweb/react"
 import { ConnectPrompt } from "@/components/connect-prompt"
+import { PreviewCard } from "@/components/ui/preview-card"
+import { getContract, prepareContractCall } from "thirdweb"
+import { client } from "../client"
+import { sepolia } from "thirdweb/chains"
+import { CROWDFUDNING_FACTORY } from "@/constants/contracts"
 
 export default function CreateCampaignPage() {
+  const { mutate: sendTransaction, } = useSendTransaction();
   const account = useActiveAccount();
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
@@ -32,6 +38,12 @@ export default function CreateCampaignPage() {
     tiers: [{ name: "Supporter", amount: "0.1" }],
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const contract = getContract({
+    client: client,
+    chain: sepolia,
+    address: CROWDFUDNING_FACTORY
+  })
 
   if (!account) {
     return (
@@ -184,20 +196,56 @@ export default function CreateCampaignPage() {
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (validateStep(currentStep)) {
-      // In a real app, this would create a blockchain transaction
-      // For now, just show a success message and redirect
+      // Log the required fields
+      console.log("📋 Campaign Submission:");
+      console.log("Title:", formData.title);
+      console.log("Description:", formData.description);
+      console.log("Goal Amount (ETH):", formData.goalAmount);
+      console.log("End Date:", formData.endDate);
+      console.log("Image URL:", formData.imageUrl);
 
-      toast.success("Campaign created successfully!")
+      // Format tiers as [["name", amount], ...]
+      const formattedTiers = formData.tiers.map((tier) => ({
+        name: tier.name,
+        amount: BigInt(Math.floor(Number(tier.amount) * 1e9)), // Convert ETH string to bigint (in Gwei)
+      }));
 
-      // Redirect to campaigns page after a delay
-      setTimeout(() => {
-        router.push("/campaigns")
-      }, 2000)
+      console.log("Tiers:", formattedTiers);
+
+
+      const transaction = prepareContractCall({
+        contract,
+        method:
+          "function createCampaign(string _title, string _description, uint256 _goalAmount, uint256 _endDate, string _imageUrl, (string name, uint256 amount)[] _tiers)",
+        params: [
+          formData.title,
+          formData.description,
+          BigInt(Number(formData.goalAmount) * 1e9),
+          BigInt(Math.floor(new Date(formData.endDate).getTime() / 1000)),
+          formData.imageUrl,
+          formattedTiers,
+        ],
+      });
+      sendTransaction(transaction, {
+        onSuccess: (result) => {
+          toast.success("Transaction confirmed!");
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            router.push("/campaigns");
+          }, 20000);
+        },
+        onError: (error) => {
+          toast.error("Transaction failed or was rejected.");
+          console.error(error);
+        },
+      });
+
     }
-  }
+  };
+
 
   // Create preview campaign object
   const previewCampaign = {
@@ -258,10 +306,10 @@ export default function CreateCampaignPage() {
                     <div className="flex flex-col items-center">
                       <div
                         className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep > 1
-                            ? "bg-gradient-to-r from-teal-500 to-cyan-600"
-                            : currentStep === 1
-                              ? "border-2 border-teal-500 bg-slate-900"
-                              : "border border-slate-700 bg-slate-800"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-600"
+                          : currentStep === 1
+                            ? "border-2 border-teal-500 bg-slate-900"
+                            : "border border-slate-700 bg-slate-800"
                           }`}
                       >
                         {currentStep > 1 ? (
@@ -275,10 +323,10 @@ export default function CreateCampaignPage() {
                     <div className="flex flex-col items-center">
                       <div
                         className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep > 2
-                            ? "bg-gradient-to-r from-teal-500 to-cyan-600"
-                            : currentStep === 2
-                              ? "border-2 border-teal-500 bg-slate-900"
-                              : "border border-slate-700 bg-slate-800"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-600"
+                          : currentStep === 2
+                            ? "border-2 border-teal-500 bg-slate-900"
+                            : "border border-slate-700 bg-slate-800"
                           }`}
                       >
                         {currentStep > 2 ? (
@@ -292,8 +340,8 @@ export default function CreateCampaignPage() {
                     <div className="flex flex-col items-center">
                       <div
                         className={`flex h-10 w-10 items-center justify-center rounded-full ${currentStep === 3
-                            ? "border-2 border-teal-500 bg-slate-900"
-                            : "border border-slate-700 bg-slate-800"
+                          ? "border-2 border-teal-500 bg-slate-900"
+                          : "border border-slate-700 bg-slate-800"
                           }`}
                       >
                         <span className="text-sm font-medium">3</span>
@@ -321,7 +369,7 @@ export default function CreateCampaignPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="space-y-2">
-                        <label htmlFor="title" className="text-sm font-medium">
+                        <label htmlFor="title" className="text-sm font-medium text-white">
                           Campaign Title <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -336,7 +384,7 @@ export default function CreateCampaignPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="description" className="text-sm font-medium">
+                        <label htmlFor="description" className="text-sm font-medium text-white">
                           Description <span className="text-red-500">*</span>
                         </label>
                         <Textarea
@@ -351,7 +399,7 @@ export default function CreateCampaignPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="goalAmount" className="text-sm font-medium">
+                        <label htmlFor="goalAmount" className="text-sm font-medium text-white">
                           Goal Amount (ETH) <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -372,7 +420,7 @@ export default function CreateCampaignPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="endDate" className="text-sm font-medium">
+                        <label htmlFor="endDate" className="text-sm font-medium text-white">
                           End Date <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -390,7 +438,7 @@ export default function CreateCampaignPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="imageUrl" className="text-sm font-medium">
+                        <label htmlFor="imageUrl" className="text-sm font-medium text-white">
                           Campaign Image URL <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -443,7 +491,7 @@ export default function CreateCampaignPage() {
                       {formData.tiers.map((tier, index) => (
                         <div key={index} className="rounded-lg border border-slate-700 bg-slate-800/30 p-4">
                           <div className="mb-4 flex items-center justify-between">
-                            <h4 className="text-sm font-medium">Tier {index + 1}</h4>
+                            <h4 className="text-sm font-medium text-white">Tier {index + 1}</h4>
                             <Button
                               type="button"
                               variant="ghost"
@@ -458,7 +506,7 @@ export default function CreateCampaignPage() {
 
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                              <label htmlFor={`tier-${index}-name`} className="text-sm font-medium">
+                              <label htmlFor={`tier-${index}-name`} className="text-sm font-medium text-white">
                                 Tier Name <span className="text-red-500">*</span>
                               </label>
                               <Input
@@ -474,7 +522,7 @@ export default function CreateCampaignPage() {
                             </div>
 
                             <div className="space-y-2">
-                              <label htmlFor={`tier-${index}-amount`} className="text-sm font-medium">
+                              <label htmlFor={`tier-${index}-amount`} className="text-sm font-medium text-white">
                                 Amount (ETH) <span className="text-red-500">*</span>
                               </label>
                               <div className="relative">
@@ -502,7 +550,7 @@ export default function CreateCampaignPage() {
                         type="button"
                         variant="outline"
                         onClick={addTier}
-                        className="w-full border-dashed border-slate-700 bg-slate-800/30"
+                        className="w-full border-dashed border-slate-700 bg-slate-800/30 text-white"
                         disabled={formData.tiers.length >= 10}
                       >
                         <Plus className="mr-2 h-4 w-4" />
@@ -547,47 +595,47 @@ export default function CreateCampaignPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="rounded-lg bg-slate-800/50 p-4">
-                        <h3 className="mb-2 text-lg font-medium">Campaign Preview</h3>
+                        <h3 className="mb-2 text-lg font-medium text-white">Campaign Preview</h3>
                         <div className="overflow-hidden rounded-lg border border-slate-700">
-                          <CampaignCard campaign={previewCampaign} />
+                          <PreviewCard campaign={previewCampaign} />
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Campaign Details</h3>
+                        <h3 className="text-lg font-medium text-white">Campaign Details</h3>
 
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="rounded-lg bg-slate-800/30 p-3">
-                            <p className="text-sm text-slate-400">Title</p>
-                            <p className="font-medium">{formData.title}</p>
+                            <p className="text-sm text-slate-400 text-white">Title</p>
+                            <p className="font-medium text-white">{formData.title}</p>
                           </div>
 
                           <div className="rounded-lg bg-slate-800/30 p-3">
-                            <p className="text-sm text-slate-400">Goal Amount</p>
-                            <p className="font-medium">{formData.goalAmount} ETH</p>
+                            <p className="text-sm text-slate-400 text-white">Goal Amount</p>
+                            <p className="font-medium text-white">{formData.goalAmount} ETH</p>
                           </div>
                         </div>
 
                         <div className="rounded-lg bg-slate-800/30 p-3">
-                          <p className="text-sm text-slate-400">Description</p>
-                          <p className="whitespace-pre-wrap">{formData.description}</p>
+                          <p className="text-sm text-slate-400 text-white">Description</p>
+                          <p className="whitespace-pre-wrap text-white">{formData.description}</p>
                         </div>
 
                         <div className="rounded-lg bg-slate-800/30 p-3">
-                          <p className="text-sm text-slate-400">End Date</p>
-                          <p className="font-medium">{new Date(formData.endDate).toLocaleDateString()}</p>
+                          <p className="text-sm text-slate-400 text-white">End Date</p>
+                          <p className="font-medium text-white">{new Date(formData.endDate).toLocaleDateString()}</p>
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-sm font-medium">Donation Tiers</p>
+                          <p className="text-sm font-medium text-white">Donation Tiers</p>
                           <div className="space-y-2">
                             {formData.tiers.map((tier, index) => (
                               <div
                                 key={index}
-                                className="flex items-center justify-between rounded-lg bg-slate-800/30 p-3"
+                                className="flex items-center justify-between rounded-lg bg-slate-800/30 p-3 text-white"
                               >
                                 <span>{tier.name}</span>
-                                <span className="font-medium">{tier.amount} ETH</span>
+                                <span className="font-medium text-white">{tier.amount} ETH</span>
                               </div>
                             ))}
                           </div>
@@ -599,7 +647,7 @@ export default function CreateCampaignPage() {
                           <Info className="mr-2 mt-0.5 h-5 w-5 text-teal-400" />
                           <div>
                             <p className="font-medium text-teal-400">Ready to Launch</p>
-                            <p className="text-sm text-slate-300">
+                            <p className="text-sm text-slate-300 ">
                               Your campaign is ready to be created. Once created, it will be visible to all users.
                             </p>
                           </div>
@@ -607,7 +655,7 @@ export default function CreateCampaignPage() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                      <Button variant="outline" onClick={handlePrevStep} className="border-slate-700 bg-slate-800/50">
+                      <Button variant="outline" onClick={handlePrevStep} className="border-slate-700 bg-slate-800/50 text-white">
                         Back
                       </Button>
                       <Button onClick={handleSubmit} className="bg-gradient-to-r from-teal-500 to-cyan-600">

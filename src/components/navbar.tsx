@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
 
 import ConnectButtonNav from "./ConnectButtonNav"
+import CustomConnectTrigger from "./customConnectTrigger"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -27,7 +28,6 @@ export function Navbar() {
     { href: "/campaigns", label: "Campaigns" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/create", label: "Create" },
-    { href: "/about", label: "About" },
   ]
 
   const isActive = (path: string) => {

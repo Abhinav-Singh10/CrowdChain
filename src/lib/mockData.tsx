@@ -51,6 +51,32 @@ export type Campaign = {
     status: string
   }[]
 }
+export type PreviewCampaign = {
+  address: string
+  owner: string
+  title: string
+  description: string
+  imageUrl: string
+  goalAmount: number // Gwei
+  totalAmountRaised: number // Wei
+  fundingGranted: number // Wei
+  status: string
+  voteStatus: string
+  totalDonors: number
+  tiers: { name: string; amount: number }[]
+  startDate: number // Unix timestamp
+  endDate: number // Unix timestamp
+  donations: { [user: string]: number } // Wei
+  votes?: {
+    amount: number
+    description: string
+    endTime: number
+    yesWeight: number
+    noWeight: number
+    status: string
+  }[]
+}
+
 export type CampaignDetails = {
   address: string
   goalAmount: number // Gwei
@@ -79,7 +105,7 @@ export const formatAddress = (address: string): string => {
   if (!address) return ""
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
 }
-export const mockCampaigns: Campaign[] = [
+export const mockCampaigns: PreviewCampaign[] = [
   {
     address: "0x123456789abcdef123456789abcdef123456789a",  //
     owner: "0xOwner123456789abcdef123456789abcdef12345",  //
