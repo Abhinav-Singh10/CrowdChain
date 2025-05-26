@@ -20,50 +20,47 @@ export function NetworkEffect({ className = "", nodeCount = 80, connectionDistan
 
     let animationFrameId: number
     let nodes: Node[] = []
-
     class Node {
-      x: number
-      y: number
-      vx: number
-      vy: number
-      radius: number
-      color: string
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      color: string;
 
-      constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
-        this.vx = (Math.random() - 0.5) * 0.5
-        this.vy = (Math.random() - 0.5) * 0.5
-        this.radius = Math.random() * 2 + 1
+      constructor(canvas: HTMLCanvasElement) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 2 + 1;
 
-        // Teal/Cyan color palette
-        const colors = ["#2DD4BF", "#14B8A6", "#0D9488", "#0F766E"]
-        this.color = colors[Math.floor(Math.random() * colors.length)]
+        const colors = ["#2DD4BF", "#14B8A6", "#0D9488", "#0F766E"];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
       }
 
-      update() {
-        // Bounce off edges
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1
-
-        this.x += this.vx
-        this.y += this.vy
+      update(canvas: HTMLCanvasElement) {
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        this.x += this.vx;
+        this.y += this.vy;
       }
 
-      draw() {
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-        ctx.fillStyle = this.color
-        ctx.fill()
+      draw(ctx: CanvasRenderingContext2D) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
       }
     }
+
 
     const init = () => {
       nodes = []
       // Adjust node count based on screen size
       const adjustedNodeCount = Math.min(nodeCount, (canvas.width * canvas.height) / 8000)
       for (let i = 0; i < adjustedNodeCount; i++) {
-        nodes.push(new Node())
+        nodes.push(new Node(canvas));
       }
     }
 
@@ -93,8 +90,8 @@ export function NetworkEffect({ className = "", nodeCount = 80, connectionDistan
 
       // Update and draw nodes
       for (let i = 0; i < nodes.length; i++) {
-        nodes[i].update()
-        nodes[i].draw()
+        nodes[i].update(canvas);
+        nodes[i].draw(ctx);
       }
 
       // Draw connections between nodes
