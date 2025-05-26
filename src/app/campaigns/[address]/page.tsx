@@ -523,7 +523,8 @@ export default function CampaignDetailsPage() {
   console.log(`Campaign Voting Details length: ` + votingDetails?.length);
   console.log(`CurrentVOteId: ` + currentVoteId);
 
-
+  console.log(`FUNDING GRANTED: ${campaign.fundingGranted}`);
+  
 
 
   return (
@@ -584,11 +585,11 @@ export default function CampaignDetailsPage() {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400 ">Goal</p>
-                            <p className="text-xl font-bold text-white">{gweiToEth(campaign.goalAmount).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.goalAmount/1e9).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Raised</p>
-                            <p className="text-xl font-bold text-white">{weiToEth(campaign.totalAmountRaised).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.totalAmountRaised/1e18).toFixed(4)} ETH</p>
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Donors</p>
@@ -596,7 +597,7 @@ export default function CampaignDetailsPage() {
                           </div>
                           <div className="rounded-lg bg-slate-800/50 p-4">
                             <p className="text-sm text-slate-400">Funds Granted</p>
-                            <p className="text-xl font-bold text-white">{weiToEth(campaign.fundingGranted).toFixed(4)} ETH</p>
+                            <p className="text-xl font-bold text-white">{(campaign.fundingGranted/1e9).toFixed(4)} ETH</p>
                           </div>
                         </div>
                       </div>
