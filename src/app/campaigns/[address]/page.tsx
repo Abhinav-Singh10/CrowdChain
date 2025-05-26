@@ -68,6 +68,7 @@ export default function CampaignDetailsPage() {
   });
   const [votingDetails, setVotingDetails] = useState<Election[]>();
   const [currentVoteId, setCurrentVoteId] = useState<number>(0);
+  const [amountDonated,setAmountDonated]=useState(0);
 
   const contractAddress = (params.address).toString();
 
@@ -219,10 +220,23 @@ export default function CampaignDetailsPage() {
       "function hasVoted(uint256, address) view returns (bool)",
     params: [BigInt(currentVoteId), account?.address || ""],
   });
+  // 3. Amount donated by address
+  const { data:RawDonatedAmount, isPending:isLoadingDonatedAmount } = useReadContract({
+    contract,
+    method:
+      "function donations(address) view returns (uint256)",
+    params: [account?.address|| "0xb488C2446c55fc9752fe327B13dbb75B078E4963"],
+  });
+    useEffect(() => {
+    if (RawDonatedAmount !== undefined) {
+      setAmountDonated(Number(RawDonatedAmount));
+    }
+  }, [RawDonatedAmount]);
+
 
   // Simulate loading campaign data
   useEffect(() => {
-    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingVoteID || isloadingHasVoted||isLoadingOngoingVoteData) {
+    if (isLoadingTiers || isLoadingRawgoalAmount || isLoadingRawtotalAmountRaised || isLoadingIndexdCampaignStatus || isLoadingEndDateAsEpoch || isLoadingCurrentVoteStatus || isLoadingRawImageURL || isLoadingRawTitle || isLoadingRawDesc || isLoadingRawDonorNumber || isLoadingRawFundingGranted || isLoadingRawOwnerData || isLoadingStartDate || isLoadingVoteID || isloadingHasVoted || isLoadingOngoingVoteData||isLoadingDonatedAmount) {
       setIsLoading(true);
       return;
     }
@@ -237,7 +251,7 @@ export default function CampaignDetailsPage() {
 
     if (ongoingVoteDetails !== null) {
       const formattedVoteDetails: Election = [...ongoingVoteDetails];
-        setVotingDetails([formattedVoteDetails])
+      setVotingDetails([formattedVoteDetails])
     }
 
 
@@ -295,7 +309,8 @@ export default function CampaignDetailsPage() {
     isLoadingVoteID,
     isLoadingAllDonors,
     isloadingHasVoted,
-    isLoadingOngoingVoteData
+    isLoadingOngoingVoteData,
+    isLoadingDonatedAmount
   ]
   )
 
@@ -324,22 +339,20 @@ export default function CampaignDetailsPage() {
   // Confirm vote
   const confirmVote = () => {
     // Update local state (in a real app, this would be a blockchain transaction)
-    const updatedCampaign = { ...campaign }
-    const vote = updatedCampaign.votes[0]
-
-    // // Add vote weight based on user's donation
-    const userDonation = updatedCampaign.donations[mockUser] || 0
-
-    if (voteChoice === "yes") {
-      vote.yesWeight += userDonation
-    } else {
-      vote.noWeight += userDonation
+     const transaction = prepareContractCall({
+      contract,
+      method:
+        "function vote(uint256 _voteId, bool _voteYes)",
+      params: [BigInt(currentVoteId), voteChoice=="yes"? true:false],
+    });
+    sendTransaction(transaction);
+    if (isSuccess) {
+      toast.success(`Vote cast sucessfully`);
+    }else{
+      toast.error(`${error}`)
     }
-
-    setCampaign(updatedCampaign)
     setShowVoteConfirm(false)
     setVoteChoice(null)
-    setHasVoted(true)
   }
 
   // Handle cancel campaign (for campaign owner)
@@ -403,7 +416,7 @@ export default function CampaignDetailsPage() {
     console.log(`Claim Funds isSuccess: ${error}`);
     if (isSuccess) {
       toast.success("Funds Claimed!")
-    }else{
+    } else {
       toast.error(`Can't claim funds as ${failureReason}`)
     }
   }
@@ -509,7 +522,7 @@ export default function CampaignDetailsPage() {
   console.log(`Campaign Voting Details: ` + votingDetails);
   console.log(`Campaign Voting Details length: ` + votingDetails?.length);
   console.log(`CurrentVOteId: ` + currentVoteId);
-  
+
 
 
 
@@ -985,10 +998,9 @@ export default function CampaignDetailsPage() {
                 {voteChoice === "yes" ? "YES" : "NO"}
               </p>
               <p className="mt-2 text-sm text-slate-400">
+
                 Your voting power: {
-                  // weiToEth(campaign.donations[mockUser] || 
-                  0
-                  // ).toFixed(2)
+                  (amountDonated/1e18).toFixed(4)
                 } ETH
               </p>
             </div>
