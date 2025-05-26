@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -167,7 +167,10 @@ export default function CampaignDetailsPage() {
       "function getAllTiers() view returns ((string name, uint256 amount)[])",
     params: [],
   });
-  const tiers = RawTierData ? RawTierData : [];
+  // const tiers = RawTierData ? RawTierData : [];
+    const tiers = useMemo(() => {
+    return RawTierData ? RawTierData : [];
+  }, [RawTierData]);
   // 13. StartDate
   const { data: StartDateEpoch, isPending: isLoadingStartDate } = useReadContract({
     contract,
@@ -182,7 +185,10 @@ export default function CampaignDetailsPage() {
       "function getAllDonors() view returns (address[])",
     params: [],
   });
-  const AllDonors = RawAllDonors ? RawAllDonors : [""];
+  // const AllDonors = RawAllDonors ? RawAllDonors : [""];
+    const AllDonors = useMemo(() => {
+    return RawAllDonors ? RawAllDonors : [];
+  }, [RawAllDonors]);
   // 15. CurrentVoteId
   const { data: RawCurrentVoteId, isPending: isLoadingVoteID } = useReadContract({
     contract,
@@ -190,6 +196,12 @@ export default function CampaignDetailsPage() {
       "function getCurrentVoteId() view returns (uint256)",
     params: [],
   });
+
+
+
+
+
+
   useEffect(() => {
     if (RawCurrentVoteId !== undefined) {
       setCurrentVoteId(Number(RawCurrentVoteId));
@@ -311,7 +323,7 @@ export default function CampaignDetailsPage() {
     isloadingHasVoted,
     isLoadingOngoingVoteData,
     isLoadingDonatedAmount,
-    AllDonors,             
+    AllDonors,
     ongoingVoteDetails
   ]
   )
