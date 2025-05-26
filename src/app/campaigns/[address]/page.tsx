@@ -776,15 +776,15 @@ export default function CampaignDetailsPage() {
                   contract,
                   method: "function donate() payable",
                   params: [],
-                  value: BigInt(campaign.tiers[selectedTier].amount),
+                  value: BigInt(campaign.tiers[selectedTier].amount*1e9),
                 })}
                 onTransactionConfirmed={async () => {
                   setShowDonateConfirm(false)
                   setSelectedTier(0)
-                  toast.success(`Donated ${(campaign.tiers[selectedTier].amount / 1e9).toFixed(4)} ETH successfully!`)
+                  toast.success(`Donated ${(campaign.tiers[selectedTier].amount).toFixed(4)} Wei successfully!`)
                 }}
                 onError={async(e)=> toast.error(`Error in transaction: ${e}
-                  Trying to donate: ${BigInt(campaign.tiers[selectedTier].amount)}`)}
+                  Trying to donate: ${BigInt(campaign.tiers[selectedTier].amount*1e9)} Wei`)}
                 className="bg-gradient-to-r from-teal-500 to-cyan-600">
                 Confirm Donation
               </TransactionButton>
