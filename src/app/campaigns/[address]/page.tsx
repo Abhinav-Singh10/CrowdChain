@@ -310,7 +310,9 @@ export default function CampaignDetailsPage() {
     isLoadingAllDonors,
     isloadingHasVoted,
     isLoadingOngoingVoteData,
-    isLoadingDonatedAmount
+    isLoadingDonatedAmount,
+    AllDonors,             
+    ongoingVoteDetails
   ]
   )
 
@@ -531,7 +533,7 @@ export default function CampaignDetailsPage() {
           <div className="container mx-auto flex flex-col items-center justify-center px-4 py-20">
             <AlertTriangle className="mb-4 h-16 w-16 text-amber-500" />
             <h1 className="mb-4 text-3xl font-bold">Campaign Not Found</h1>
-            <p className="mb-8 text-slate-400">The campaign you're looking for doesn't exist or has been removed.</p>
+            <p className="mb-8 text-slate-400">The campaign you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <Button onClick={() => router.push("/campaigns")} className="bg-gradient-to-r from-teal-500 to-cyan-600">
               Browse Campaigns
             </Button>
