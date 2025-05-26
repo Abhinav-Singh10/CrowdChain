@@ -170,6 +170,17 @@ export default function CampaignDetailsPage() {
     params: [],
   });
   const startDate = StartDateEpoch ? Number(StartDateEpoch) : 0
+  // 14. All Donors
+  
+
+  // Contract Checks
+  // 1. isVoteEligible
+    const { data:isVoteEligible, isPending:isLoadingvoteCheck } = useReadContract({
+    contract,
+    method: "function isVoteEligible() view returns (bool)",
+    params: [],
+  });
+
 
   // Simulate loading campaign data
   useEffect(() => {
@@ -199,12 +210,13 @@ export default function CampaignDetailsPage() {
       tiers: formattedTiers,
       startDate: startDate,
       endDate: endDate,
+
     }
     if (campaignData) {
       setCampaign(campaignData)
     }
     setIsLoading(false)
-  }, [isLoadingTiers || isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate])
+  }, [isLoadingTiers || isLoadingRawgoalAmount, isLoadingRawtotalAmountRaised, isLoadingIndexdCampaignStatus, isLoadingEndDateAsEpoch, isLoadingCurrentVoteStatus, isLoadingRawImageURL, isLoadingRawTitle, isLoadingRawDesc, isLoadingRawDonorNumber, isLoadingRawFundingGranted, isLoadingRawOwnerData, isLoadingStartDate||isLoadingvoteCheck||contractAddress||desc||endDate||fundingGranted||goalAmount||imageUrl||isLoadingRawgoalAmount||isLoadingTiers||owner||startDate||status||tiers||title||totalAmountRaised||totalDonors||voteStatus])
 
 
   // Check if user has already voted
@@ -271,11 +283,6 @@ export default function CampaignDetailsPage() {
     setHasVoted(true)
   }
 
-  // Handle start vote (for campaign owner)
-  const handleStartVote = () => {
-    setShowFundReleaseModal(true);
-  }
-
   // Handle cancel campaign (for campaign owner)
   const handleCancelCampaign = () => {
     setShowCancelConfirm(true)
@@ -330,6 +337,11 @@ export default function CampaignDetailsPage() {
 
   // Check if user is campaign owner (Done)
   const isOwner = campaign?.owner === account?.address
+
+  // Handle start vote (for campaign owner)
+  const handleStartVote = () => {
+    setShowFundReleaseModal(true);
+  }
 
   // Check if user has donated
   const userDonation = campaign?.donations?.[mockUser] || 0
@@ -699,13 +711,13 @@ export default function CampaignDetailsPage() {
                       </CardHeader>
                       <CardContent>
                         {campaign.status === "Active" && campaign.voteStatus === "Eligible" && (
-                          <Button onClick={handleStartVote} className="w-full bg-cyan-600 hover:bg-cyan-700">
+                          <Button onClick={handleStartVote} disabled={!owner || !isVoteEligible} className="w-full bg-cyan-600 hover:bg-cyan-700">
                             Start Vote
                           </Button>
                         )}
 
                         {campaign.status === "Active" && (
-                          <Button onClick={handleCancelCampaign} variant="destructive" className="mt-2 w-full">
+                          <Button onClick={handleCancelCampaign} disabled={!owner} variant="destructive" className="mt-2 w-full">
                             Cancel Campaign
                           </Button>
                         )}
@@ -867,7 +879,7 @@ export default function CampaignDetailsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={()=>handleInitiateFundRelease(fundReleaseData)} className="bg-gradient-to-r from-teal-500 to-cyan-600">
+              <Button onClick={() => handleInitiateFundRelease(fundReleaseData)} className="bg-gradient-to-r from-teal-500 to-cyan-600">
                 Initiate Fund Release Process
               </Button>
             </DialogFooter>
