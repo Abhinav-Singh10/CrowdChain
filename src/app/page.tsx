@@ -11,7 +11,7 @@ import { HeroStats } from "@/components/hero-stats"
 import { HeroImage } from "@/components/hero-image"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import CustomConnectTrigger  from "@/components/customConnectTrigger"
+import CustomConnectTrigger from "@/components/customConnectTrigger"
 
 export default function Home() {
   return (
@@ -188,8 +188,7 @@ function CtaSection() {
             <FadeIn>
               <h2 className="mb-6 text-3xl font-bold md:text-5xl">Ready to Join the Future of Crowdfunding?</h2>
               <p className="mb-10 text-lg text-slate-300 md:text-xl">
-                Connect your wallet today and become part of a revolutionary platform that's changing how projects get
-                funded.
+                Connect your wallet today and become part of a revolutionary platform that&apos;s changing how projects get funded.  Connect your wallet today and become part of a revolutionary platform that&apos;s changing how projects get funded.
               </p>
               <Button
                 asChild

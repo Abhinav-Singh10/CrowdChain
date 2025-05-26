@@ -14,13 +14,13 @@ export function HeroStats({ className = "" }: HeroStatsProps) {
     funded: 0,
   })
 
-  const targetStats = {
-    projects: 1250,
-    backers: 25000,
-    funded: 15,
-  }
 
   useEffect(() => {
+    const targetStats = {
+      projects: 1250,
+      backers: 25000,
+      funded: 15,
+    }
     const duration = 2000 // 2 seconds
     const frameDuration = 1000 / 60 // 60fps
     const totalFrames = Math.round(duration / frameDuration)
