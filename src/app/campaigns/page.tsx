@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Search, Filter, Loader2 } from "lucide-react"
-import { mockCampaigns, type CampaignDetails } from "@/lib/mockData" // Clean Mock data
+import { statusMap, voteStatusMap, type CampaignDetails } from "@/lib/mockData" // Clean Mock data
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { CampaignCard } from "@/components/ui/campaign-card"
@@ -25,20 +25,7 @@ export type CampaignAddress = {
   address: string
 }
 
-// Map status and voteStatus numbers to strings
-const statusMap: Record<number, CampaignDetails['status']> = {
-  0: 'Active',
-  1: 'Ended',
-  2: 'Cancelled',
-};
 
-const voteStatusMap: Record<number, CampaignDetails['voteStatus']> = {
-  0: 'Active',
-  1: 'Approved',
-  2: 'Rejected',
-  3: 'NoVotes',
-  4: 'Eligible',
-};
 
 
 export default function CampaignsPage() {
@@ -84,7 +71,6 @@ export default function CampaignsPage() {
     if (isLoadingAllCampaigns) {
       setIsLoading(true);
     } else {
-      setIsLoading(false);
       if (AllCampaigns) {
         // setCampaigns(AllCampaigns);
         const formattedCampaigns: CampaignDetails[] = AllCampaigns.map(c => ({
@@ -95,14 +81,11 @@ export default function CampaignsPage() {
           status: statusMap[c.status] || 'Active', //Defaulting to Active
           voteEligible: c.voteEligible,
           voteStatus: voteStatusMap[c.voteStatus] || 'NoVotes', //Defualting to NoVotes
-
         }))
         setCampaigns(formattedCampaigns);
       }
     }
     setIsLoading(false)
-
-
   }, [AllCampaigns, isLoadingAllCampaigns])
 
 
