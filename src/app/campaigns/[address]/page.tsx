@@ -757,13 +757,13 @@ export default function CampaignDetailsPage() {
                             <div className="rounded-lg bg-green-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">Yes</p>
                               <p className="font-bold text-green-400">
-                                {(Number(votingDetails[0][4]) / 1e9).toFixed(4)} ETH
+                                {(Number(votingDetails[0][4]) / 1e9).toFixed(4)} GWEI
                               </p>
                             </div>
                             <div className="rounded-lg bg-red-500/10 p-3 text-center">
                               <p className="text-xs text-slate-400">No</p>
                               <p className="font-bold text-red-400">
-                                {(Number(votingDetails[0][5]) / 1e9).toFixed(4)} ETH
+                                {(Number(votingDetails[0][5]) / 1e9).toFixed(4)} GWEI
                               </p>
                             </div>
                           </div>
