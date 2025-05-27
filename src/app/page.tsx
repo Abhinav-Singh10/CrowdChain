@@ -56,7 +56,7 @@ function HeroSection() {
                 className="border-slate-700 bg-transparent px-8 text-lg hover:text-teal-400 hover:border-teal-400 hover:bg-slate-800"
                 asChild
               >
-                <Link href="/explore">Explore Projects</Link>
+                <Link href="/campaigns">Explore Projects</Link>
               </Button>
             </div>
           </div>
